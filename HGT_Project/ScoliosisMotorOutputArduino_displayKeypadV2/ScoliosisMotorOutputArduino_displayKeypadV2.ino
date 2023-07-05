@@ -211,8 +211,8 @@ void loop() { // Main code loop
       u8g2.print("set weight:");
       u8g2.setCursor(0, 15);
       u8g2.setFont(u8g2_font_fub30_tf);
-      if (digitPlace == 1){u8g2.print("00.0");}
-      if (digitPlace != 1){u8g2.print(newSetWeightBuffer);}
+      if (newSetWeight < 10){u8g2.print("0");}
+      u8g2.print(newSetWeightBuffer);
       u8g2.print("lb");
       u8g2.setCursor(0, 20);
       if (digitPlace == 1){u8g2.print("_  ");}
@@ -251,7 +251,7 @@ void loop() { // Main code loop
             u8g2.clearBuffer();
 
             cancelled = true;
-            digitPlace = 1; // resets digitPlace in case of cancel on startup
+            if (systemStartup == true){digitPlace = 1;} // resets digitPlace in case of cancel on startup
             newSetWeight = 0;
             newKeypadDouble = 0;
 
@@ -373,7 +373,7 @@ void loop() { // Main code loop
 
 
 //PIN OUTPUT:
-  if (voltage < (setVoltage - 0.20)) { // loostens cable if voltage is too high
+  if (voltage < (setVoltage - 0.20)) { // loosens cable if voltage is too high
     digitalWrite(abovePin, HIGH);
     digitalWrite(belowPin, LOW);
   } else if (voltage > (setVoltage + 0.20)) { // tightens cable is voltage is too low
