@@ -1,0 +1,85 @@
+//Buzzing came from less current than necessary
+
+// Set max velocity and acceleration
+amax = 1000
+vmax = 300
+vmin = vmax / 6
+
+// Set max current for moving the motor and max current for when it is stopped
+cmax = 255
+c_stopped = 150
+
+// Setting the axis parameters for acceleration and the two currents
+SAP 2 , 0 , vmax
+SAP 5 , 0 , amax
+SAP 6 , 0 , cmax
+SAP 7 , 0 , c_stopped
+SIO 0 , 0 , 0
+
+//main loop
+loop:
+	// Reset the inputs to 0
+	//SIO 0 , 0 , 0
+	
+	GIO 1 , 0
+	COMP 1
+	JC EQ , turnRight
+
+	GIO 2 , 0
+	COMP 1
+	JC EQ , turnLeft
+	
+	GGP 42 , 2
+	COMP 100
+	JC EQ , stopMotor
+
+	// Go back to loop
+	JA loop
+
+turnRight:
+	SGP 42 , 2 , 100
+	// Get IN1 reading and if 1 it goes to turnRight
+	GIO 3 , 0
+	COMP 1
+	JC EQ , turnRightFast
+	
+	// Get IN2 reading and if 1 it goes to turnLeft
+	GIO 3 , 0
+	COMP 0
+	JC EQ , turnRightSlow
+
+turnLeft:
+	SGP 42 , 2 , 100
+	// Get IN1 reading and if 1 it goes to turnRight
+	GIO 3 , 0
+	COMP 1
+	JC EQ , turnLeftFast
+	
+	// Get IN2 reading and if 1 it goes to turnLeft
+	GIO 3 , 0
+	COMP 0
+	JC EQ , turnLeftSlow
+
+// Turn right command and set OUT1 to 0
+turnRightFast:
+	ROR 0 , vmax
+	JA loop
+
+// Turn left command and set OUT1 to 0
+turnLeftFast:
+	ROL 0 , vmax
+	JA loop
+
+turnRightSlow:
+	ROR 0 , vmin
+	JA loop
+
+turnLeftSlow:
+	ROL 0 , vmin
+	JA loop
+
+// Stop command and set OUT1 to 1
+stopMotor:
+	MST 0
+	SGP 42 , 2 , 50
+	JA loop
