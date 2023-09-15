@@ -22,12 +22,14 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.uic import loadUi
+from hx711 import HX711
 
 import random
 
 import time
 import RPi.GPIO as GPIO
 import curses
+import math
 
 
 # -*- coding: utf-8 -*-
@@ -619,21 +621,21 @@ class scoliosisUi(QWidget):
         self.ui.tooLargeLabel_2.setHidden(True)
 
         # Initializations for back end
-        hx = HX711(5, 6)
-        hx.set_reading_format("MSB", "MSB")
-        hx.set_reference_unit(referenceUnit)
-        hx.reset()
-        hx.tare()
+        self.referenceUnit = -66090
+
+        self.hx = HX711(5, 6)
+        self.hx.set_reading_format("MSB", "MSB")
+        self.hx.set_reference_unit(self.referenceUnit)
+        self.hx.reset()
+        self.hx.tare()
         
         self.dead_band_range = 1.0
-        self.slow_mode_range = 1.0
+        self.slow_mode_range = 5.0
         self.increase_tension = 22
         self.decrease_tension = 27
         self.slow_mode = 17
         self.output_pins = [self.increase_tension , self.decrease_tension , self.slow_mode]
-        self.referenceUnit = -66090
-
-        global set_point , dead_band_range
+        
 
         GPIO.setup(self.increase_tension , GPIO.OUT)
         GPIO.setup(self.decrease_tension , GPIO.OUT)
@@ -644,9 +646,9 @@ class scoliosisUi(QWidget):
             
 
         # Arrays for tension history
-        self.timeArray = [0]
+        self.timeArray = []
         self.timeArrayCounter = 0
-        self.tensionArray = [0]
+        self.tensionArray = []
 
 
         self.ui.stackedWidget.setCurrentWidget(self.ui.setTension)
@@ -697,30 +699,35 @@ class scoliosisUi(QWidget):
         self.ui.keypadEnter_2.clicked.connect(lambda: self.manualSetTimeDelay(11))
         self.ui.keypadDecimal_2.clicked.connect(lambda: self.manualSetTimeDelay(12))
         self.ui.keypadClear_2.clicked.connect(lambda: self.manualSetTimeDelay(13))
-
-
-        # getting tension
-        self.current_tension = self.get_tension(self, hx)
-        self.turning_direction , self.speed = self.controller(self.current_tension)
         
 
         # creating a timer object for graph test
         timer = QTimer(self)
         # adding action to timer
+        # UPDATES EVERY 1 SECOND
+        timer.timeout.connect(self.updateWeight)
         timer.timeout.connect(self.arrayAppend)
+        timer.timeout.connect(self.controller)
         # update the timer every second
         timer.start(1000)
 
-
-        
-
-
+    def updateWeight(self):
+        self.current_tension = self.get_tension()
+        print("Updating current weight to: " + str(self.current_tension))
+        if math.floor(abs(self.current_tension)) <= 0.0:
+            self.ui.currentWeightLCD.display(0.00)
+        else:
+            self.ui.currentWeightLCD.display(self.current_tension)
 
 
     def arrayAppend(self):
+        if len(self.timeArray) > 60:
+            del self.timeArray[0]
+            del self.tensionArray[0]
         self.timeArray.append(self.timeArrayCounter)
-        self.tensionArray.append(random.randint(10, 15))
+        self.tensionArray.append(abs(self.current_tension))
         self.timeArrayCounter += 1
+
         # TENSION HISTORY PLOT #
         self.plot(self.timeArray, self.tensionArray)
 
@@ -728,6 +735,7 @@ class scoliosisUi(QWidget):
 
     ## Tension History Plotter Function ##
     def plot(self, time, tension):
+        print("Updating plot")
         self.ui.graphWidget.plot(time, tension)
         
         
@@ -864,52 +872,51 @@ class scoliosisUi(QWidget):
 
 
 
-    def get_tension(self, hx):
-            val = hx.get_weight(5)
+    def get_tension(self):
+            val = self.hx.get_weight(5)
 
-            hx.power_down()
-            hx.power_up()
+            self.hx.power_down()
+            self.hx.power_up()
             time.sleep(0.1)
             return val
 
 
     # Controller is able to compare the current tension to the set point to see if it's within the dead band and within the slow mode range
-    def controller(current_tension):
-
-        global set_point , dead_band_range
+    def controller(self):
+        print("Updating controller")
 
         # If the current tension is below the dead band the tension is increased
-        if set_point - dead_band_range > self.current_tension:
+        if self.setWeight - self.dead_band_range > self.current_tension:
 
             # If the current tension is below the slow mode range the speed is fast
-            if set_point - slow_mode_range > self.current_tension:
-                GPIO.output(slow_mode , GPIO.LOW)
+            if self.setWeight - self.slow_mode_range > self.current_tension:
+                GPIO.output(self.slow_mode , GPIO.LOW)
                 speed = "Fast"
             else:
-                GPIO.output(slow_mode , GPIO.HIGH)
+                GPIO.output(self.slow_mode , GPIO.HIGH)
                 speed = "Slow"
-            GPIO.output(increase_tension , GPIO.HIGH)
-            GPIO.output(decrease_tension , GPIO.LOW)
+            GPIO.output(self.increase_tension , GPIO.HIGH)
+            GPIO.output(self.decrease_tension , GPIO.LOW)
             turning_direction = "Increasing Tension"
         
         # If the current tension is above the dead band the tension is decreased
-        elif set_point + dead_band_range < self.current_tension:
+        elif self.setWeight + self.dead_band_range < self.current_tension:
 
             # If the current tension is above the slow mode range the speed is fast
-            if set_point + slow_mode_range < self.current_tension:
-                GPIO.output(slow_mode , GPIO.LOW)
+            if self.setWeight + self.slow_mode_range < self.current_tension:
+                GPIO.output(self.slow_mode , GPIO.LOW)
                 speed = "Fast"
             else:
-                GPIO.output(slow_mode , GPIO.HIGH)
+                GPIO.output(self.slow_mode , GPIO.HIGH)
                 speed = "Slow"
-            GPIO.output(decrease_tension , GPIO.HIGH)
-            GPIO.output(increase_tension , GPIO.LOW)
+            GPIO.output(self.decrease_tension , GPIO.HIGH)
+            GPIO.output(self.increase_tension , GPIO.LOW)
             turning_direction = "Decreasing Tension"
         
         else:
             speed = ""
             turning_direction = "Stopped"
-            for i in output_pins:
+            for i in self.output_pins:
                 GPIO.output(i , GPIO.LOW)
         
         return turning_direction , speed
@@ -940,15 +947,6 @@ if __name__ == '__main__':
     dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
     dark_palette.setColor(QPalette.HighlightedText, Qt.black)
     app.setPalette(dark_palette)
-
-
-    # SETUP
-    if not EMULATE_HX711:
-        from hx711 import HX711
-    else:
-    from emulated_hx711 import HX711
-
-
     
     main_win = scoliosisUi()
     main_win.show()
