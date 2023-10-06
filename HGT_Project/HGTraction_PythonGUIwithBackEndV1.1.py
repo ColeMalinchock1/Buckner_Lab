@@ -24,6 +24,7 @@ from PyQt5.QtGui import *
 from PyQt5.uic import loadUi
 from hx711 import HX711
 
+import socket
 import random
 
 import time
@@ -651,6 +652,17 @@ class scoliosisUi(QWidget):
         self.tensionArray = []
 
 
+        ########### TEMPORARY FOR KIVY APP ###########
+        # Initializing Socket
+        global last_time
+        last_time = 0
+        self.receiver_ip = '192.168.117.95'
+        self.receiver_port = 80
+
+        self.sender_socket = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
+
+        self.sender_socket.connect((self.receiver_ip , self.receiver_port))
+
         self.ui.stackedWidget.setCurrentWidget(self.ui.setTension)
 
         self.ui.setTensionButton.clicked.connect(self.showSetTension)
@@ -709,8 +721,18 @@ class scoliosisUi(QWidget):
         timer.timeout.connect(self.updateWeight)
         timer.timeout.connect(self.arrayAppend)
         timer.timeout.connect(self.controller)
+        timer.timeout.connect(self.sendData)
         # update the timer every second
         timer.start(100)
+
+    def sendData(self):
+        global last_time
+        if time.time() - last_time > 1:
+            data = self.current_tension
+            data_bytes = str(data).encode('utf-8')
+            self.sender_socket.send(data_bytes)
+            last_time = time.time()
+        
 
     def updateWeight(self):
         new_time = time.time()
