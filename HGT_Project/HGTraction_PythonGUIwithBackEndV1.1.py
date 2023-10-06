@@ -705,19 +705,23 @@ class scoliosisUi(QWidget):
         timer = QTimer(self)
         # adding action to timer
         # UPDATES EVERY 1 SECOND
+        self.old_time = 0
         timer.timeout.connect(self.updateWeight)
         timer.timeout.connect(self.arrayAppend)
         timer.timeout.connect(self.controller)
         # update the timer every second
-        timer.start(1000)
+        timer.start(100)
 
     def updateWeight(self):
+        new_time = time.time()
+        #print(new_time - self.old_time)
         self.current_tension = self.get_tension()
-        print("Updating current weight to: " + str(self.current_tension))
+        #print("Updating current weight to: " + str(self.current_tension))
         if math.floor(abs(self.current_tension)) <= 0.0:
             self.ui.currentWeightLCD.display(0.00)
         else:
             self.ui.currentWeightLCD.display(self.current_tension)
+        self.old_time = new_time
 
 
     def arrayAppend(self):
@@ -735,7 +739,7 @@ class scoliosisUi(QWidget):
 
     ## Tension History Plotter Function ##
     def plot(self, time, tension):
-        print("Updating plot")
+        #print("Updating plot")
         self.ui.graphWidget.plot(time, tension)
         
         
@@ -758,7 +762,7 @@ class scoliosisUi(QWidget):
         elif pressed == 12:
             if self.decimal_1 == False:
                     mstLCDstring = (str(int(self.ui.manualSetTensionLCD.value()))+("."))
-                    print (mstLCDstring)
+                    #print (mstLCDstring)
                     self.ui.manualSetTensionLCD.display(mstLCDstring)
                     self.decimal_1 = True
                     self.ui.setMark.setHidden(True)
@@ -771,14 +775,14 @@ class scoliosisUi(QWidget):
             else:
                 if self.decimal_1 == False:
                     mstLCDstring = (str(int(self.ui.manualSetTensionLCD.value())))+(str(pressed))
-                    print (mstLCDstring)
+                    #print (mstLCDstring)
                     self.ui.manualSetTensionLCD.display(float(mstLCDstring))
                     self.ui.setMark.setHidden(True)
                     self.ui.tooLargeLabel.setHidden(True)
                 else:
                     if self.maxPrecision_1 == False:
                         mstLCDstring = str(float(self.ui.manualSetTensionLCD.value()) + (0.1 * int(pressed)))
-                        print (mstLCDstring)
+                        #print (mstLCDstring)
                         self.ui.manualSetTensionLCD.display(mstLCDstring)
                         self.maxPrecision_1 = True
                         self.ui.setMark.setHidden(True)
@@ -807,32 +811,32 @@ class scoliosisUi(QWidget):
         elif pressed == 12: # Decimal
             if self.decimal_2 == False:
                     mstLCDstring = (str(int(self.ui.manualSetTimeDelayLCD.value()))+("."))
-                    print (mstLCDstring)
+                    #print (mstLCDstring)
                     self.ui.manualSetTimeDelayLCD.display(mstLCDstring)
                     self.decimal_2 = True
                     self.ui.setMark_2.setHidden(True)
                     self.ui.tooLargeLabel_2.setHidden(True)
                     
         else: # Any number
-            print("number pressed")
+            #print("number pressed")
             if (self.ui.manualSetTimeDelayLCD.value() == 0) and (self.decimal_2 == False):
-                print("value is 0 and decimal is false")
+                #print("value is 0 and decimal is false")
                 self.ui.manualSetTimeDelayLCD.display(pressed)
-                print("manual set time displayed")
+                #print("manual set time displayed")
                 self.ui.setMark_2.setHidden(True)
                 self.ui.tooLargeLabel_2.setHidden(True)
-                print("setmarks hidden")
+                #print("setmarks hidden")
             else:
                 if self.decimal_2 == False:
                     mstLCDstring = (str(int(self.ui.manualSetTimeDelayLCD.value())))+(str(pressed))
-                    print (mstLCDstring)
+                    #print (mstLCDstring)
                     self.ui.manualSetTimeDelayLCD.display(float(mstLCDstring))
                     self.ui.setMark_2.setHidden(True)
                     self.ui.tooLargeLabel_2.setHidden(True)
                 else:
                     if self.maxPrecision_2 == False:
                         mstLCDstring = str(float(self.ui.manualSetTimeDelayLCD.value()) + (0.1 * int(pressed)))
-                        print (mstLCDstring)
+                        #print (mstLCDstring)
                         self.ui.manualSetTimeDelayLCD.display(mstLCDstring)
                         self.maxPrecision_2 = True
                         self.ui.setMark_2.setHidden(True)
@@ -840,16 +844,16 @@ class scoliosisUi(QWidget):
         
 
     def doTensionUp(self):
-        print("Weight +1.0")
+        #print("Weight +1.0")
         self.setWeight += 1.0
-        print(self.setWeight)
+        #print(self.setWeight)
         self.ui.setTensionLCD.display(self.setWeight)
         
 
     def doTensionDown(self):
-        print("Weight -1.0")
+        #print("Weight -1.0")
         self.setWeight -= 1.0
-        print(self.setWeight)
+        #print(self.setWeight)
         self.ui.setTensionLCD.display(self.setWeight)
 
 
@@ -875,25 +879,25 @@ class scoliosisUi(QWidget):
     def get_tension(self):
             val = self.hx.get_weight(5)
 
-            self.hx.power_down()
-            self.hx.power_up()
-            time.sleep(0.1)
+            #self.hx.power_down()
+            #self.hx.power_up()
+            #time.sleep(0.1)
             return val
 
 
     # Controller is able to compare the current tension to the set point to see if it's within the dead band and within the slow mode range
     def controller(self):
-        print("Updating controller")
+        #print("Updating controller")
 
         # If the current tension is below the dead band the tension is increased
         if self.setWeight - self.dead_band_range > self.current_tension:
 
             # If the current tension is below the slow mode range the speed is fast
             if self.setWeight - self.slow_mode_range > self.current_tension:
-                GPIO.output(self.slow_mode , GPIO.LOW)
+                GPIO.output(self.slow_mode , GPIO.HIGH)
                 speed = "Fast"
             else:
-                GPIO.output(self.slow_mode , GPIO.HIGH)
+                GPIO.output(self.slow_mode , GPIO.LOW)
                 speed = "Slow"
             GPIO.output(self.increase_tension , GPIO.HIGH)
             GPIO.output(self.decrease_tension , GPIO.LOW)
@@ -904,10 +908,10 @@ class scoliosisUi(QWidget):
 
             # If the current tension is above the slow mode range the speed is fast
             if self.setWeight + self.slow_mode_range < self.current_tension:
-                GPIO.output(self.slow_mode , GPIO.LOW)
+                GPIO.output(self.slow_mode , GPIO.HIGH)
                 speed = "Fast"
             else:
-                GPIO.output(self.slow_mode , GPIO.HIGH)
+                GPIO.output(self.slow_mode , GPIO.LOW)
                 speed = "Slow"
             GPIO.output(self.decrease_tension , GPIO.HIGH)
             GPIO.output(self.increase_tension , GPIO.LOW)
@@ -954,6 +958,7 @@ if __name__ == '__main__':
     try:
         sys.exit(app.exec_())
     except:
-        print("Exiting")
+        #print("Exiting")
+        pass
 
 
