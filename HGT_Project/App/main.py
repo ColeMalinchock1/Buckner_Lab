@@ -6,8 +6,12 @@ from kivy.uix.widget import Widget
 from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 from kivy.clock import Clock 
+from kivy.logger import Logger
 
 import psycopg2
+import os
+
+Logger.info("Starting YourApp")
 
 Builder.load_file('plotter.kv')
 
@@ -30,6 +34,7 @@ class MyLayout(Widget):
             user = "vipvuskuzhbrsx",
             password = "cadc830239a433cc331b0665422d99b755647c8510cfcb5d6b3c9e07883e1f66",
             port = "5432",
+            sslmode = "require",
         )
 
         c = conn.cursor()
