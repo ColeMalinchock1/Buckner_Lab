@@ -1,0 +1,45 @@
+<MyLayout>
+
+    canvas.before:
+        Color:
+            rgba: (1,1,1,0.5)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width , root.height
+
+        padding: 50
+        spacing: 20
+
+        Label:
+            size_hint: (1 , 0.5)
+            font_size: 100
+            text: "Halo Gravity\nTraction Project"
+
+        Label:
+            id: display
+            size_hint: (1 , 0.5)
+            font_size: 75
+            text: "Retrieving Data..."
+
+        Graph:
+            size_hint: (1 , 0.5)
+            id: graph
+            xlabel: "Time"
+            ylabel: "Tension"
+            x_ticks_major: 25
+            y_ticks_major: 10
+            y_grid_label: True
+            x_grid_label: True
+            padding: 5
+            xlog: False
+            ylog: False
+            x_grid: True
+            y_grid: True
+            xmin: -0
+            xmax: 100
+            ymin: -0
+            ymax: 50
