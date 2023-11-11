@@ -1,45 +1,194 @@
-<MyLayout>
+<PatientSelect>:
+        BoxLayout:
+        
+                padding: 50
+                spacing: 20
 
-    canvas.before:
-        Color:
-            rgba: (1,1,1,0.5)
-        Rectangle:
-            pos: self.pos
-            size: self.size
+                orientation: 'vertical'
 
-    BoxLayout:
-        orientation: "vertical"
-        size: root.width , root.height
+                Button:
+                        id: patient1
+                        text: 'Loading...'
+                        on_press: root.manager.current = 'menu'
+                Button:
+                        id: patient2
+                        text: 'Loading...'
+                        on_press: root.manager.current = 'menu'
+                Button:
+                        id: patient3
+                        text: 'Loading...'
+                        on_press: root.manager.current = 'menu'
 
-        padding: 50
-        spacing: 20
+<MenuScreen>:
 
-        Label:
-            size_hint: (1 , 0.5)
-            font_size: 100
-            text: "Halo Gravity\nTraction Project"
+        canvas.before:
+                Color:
+                        rgba: (1,1,1,0.5)
+                Rectangle:
+                        pos: self.pos
+                        size: self.size
 
-        Label:
-            id: display
-            size_hint: (1 , 0.5)
-            font_size: 75
-            text: "Retrieving Data..."
+        BoxLayout:
 
-        Graph:
-            size_hint: (1 , 0.5)
-            id: graph
-            xlabel: "Time"
-            ylabel: "Tension"
-            x_ticks_major: 25
-            y_ticks_major: 10
-            y_grid_label: True
-            x_grid_label: True
-            padding: 5
-            xlog: False
-            ylog: False
-            x_grid: True
-            y_grid: True
-            xmin: -0
-            xmax: 100
-            ymin: -0
-            ymax: 50
+                padding: 50
+                spacing: 20
+
+                orientation: 'vertical'
+
+                Button:
+                        text: 'Go back to patient select'
+                        on_press: root.manager.current = 'patient_select'
+
+                Button:
+                        text: 'Go to short-term graph'
+                        on_press: root.manager.current = 'graph_short'
+                Button:
+                        text: 'Go to long-term graph'
+                        on_press: root.manager.current = 'graph_long'
+                Button:
+                        text: 'Go to information'
+                        on_press: root.manager.current = 'info'
+
+<Info>
+
+        canvas.before:
+                Color:
+                        rgba: (1,1,1,0.5)
+                Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+        BoxLayout:
+
+                padding: 50
+                spacing: 20
+
+                orientation: 'vertical'
+
+                Button:
+                        text: 'Back to menu'
+                        on_press: root.manager.current = 'menu'
+
+                Label:
+                        id: name
+                        size_hint: (1 , 0.5)
+                        font_size: 60
+                        text: "Loading..."
+
+                Label:
+                        id: age
+                        size_hint: (1 , 0.5)
+                        font_size: 60
+                        text: "Loading..."
+
+                Label:
+                        id: guardian
+                        size_hint: (1 , 0.5)
+                        font_size: 60
+                        text: "Loading..."
+
+                Label:
+                        id: phone_number
+                        size_hint: (1 , 0.5)
+                        font_size: 60
+                        text: "Loading..."
+
+<GraphShort>
+
+        canvas.before:
+                Color:
+                        rgba: (1,1,1,0.5)
+                Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+        BoxLayout:
+                orientation: "vertical"
+                size: root.width , root.height
+
+                padding: 50
+                spacing: 20
+
+                Button:
+                        text: 'Back to menu'
+                        on_press: root.manager.current = 'menu'
+
+                Label:
+                        size_hint: (1 , 0.5)
+                        font_size: 100
+                        text: "Halo Gravity\nTraction Project"
+
+                Label:
+                        id: display
+                        size_hint: (1 , 0.5)
+                        font_size: 75
+                        text: "Retrieving Data..."
+
+                Graph:
+                        size_hint: (1 , 0.5)
+                        id: graph
+                        xlabel: "Time"
+                        ylabel: "Tension"
+                        x_ticks_major: 25
+                        y_ticks_major: 10
+                        y_grid_label: True
+                        x_grid_label: True
+                        padding: 5
+                        xlog: False
+                        ylog: False
+                        x_grid: True
+                        y_grid: True
+                        xmin: -0
+                        xmax: 100
+                        ymin: -0
+                        ymax: 50
+
+<GraphLong>
+
+        canvas.before:
+                Color:
+                        rgba: (1,1,1,0.5)
+                Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+        BoxLayout:
+                orientation: "vertical"
+                size: root.width , root.height
+
+                padding: 50
+                spacing: 20
+
+                Button:
+                        text: 'Back to menu'
+                        on_press: root.manager.current = 'menu'
+
+                Label:
+                        size_hint: (1 , 0.5)
+                        font_size: 100
+                        text: "Halo Gravity\nTraction Project"
+
+                Label:
+                        id: display
+                        size_hint: (1 , 0.5)
+                        font_size: 75
+                        text: "Retrieving Data..."
+
+                Graph:
+                        size_hint: (1 , 0.5)
+                        id: graph
+                        xlabel: "Time"
+                        ylabel: "Tension"
+                        x_ticks_major: 25
+                        y_ticks_major: 10
+                        y_grid_label: True
+                        x_grid_label: True
+                        padding: 5
+                        xlog: False
+                        ylog: False
+                        x_grid: True
+                        y_grid: True
+                        xmin: -0
+                        xmax: 100
+                        ymin: -0
+                        ymax: 50
