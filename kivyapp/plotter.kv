@@ -1,0 +1,228 @@
+<PatientSelect>:
+
+        RelativeLayout:
+
+
+
+                Label:
+                        id: patient_window
+                        text: "Select Patient"
+                        font_size: 60
+                        size_hint: (0.2 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 1}
+
+
+                Button:
+                        id: patient1
+                        text: 'Loading...'
+                        on_press: root.manager.current = 'menu'
+                        size_hint: (0.8 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.8}
+
+
+                Button:
+                        id: patient2
+                        text: 'Loading...'
+                        on_press: root.manager.current = 'menu'
+                        size_hint: (0.8 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.55}
+
+
+                Button:
+                        id: patient3
+                        text: 'Loading...'
+                        on_press: root.manager.current = 'menu'
+                        size_hint: (0.8 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.30}
+
+
+<MenuScreen>:
+
+
+        RelativeLayout:
+
+                padding: 50
+                spacing: 20
+
+                Button:
+                        text: 'Back'
+                        on_press: root.manager.current = 'patient_select'
+                        size_hint: (0.2 , 0.2)
+                        pos_hint: {'x': 0 , 'top': 1}
+                        
+
+                Button:
+                        text: 'Go to short-term graph'
+                        on_press: root.manager.current = 'graph_short'
+                        size_hint: (0.8 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.8}
+                Button:
+                        text: 'Go to long-term graph'
+                        on_press: root.manager.current = 'select_time'
+                        size_hint: (0.8 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.5}
+                Button:
+                        text: 'Go to information'
+                        on_press: root.manager.current = 'info'
+                        size_hint: (0.8 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.2}
+
+<Info>
+
+
+        BoxLayout:
+
+                padding: 50
+                spacing: 20
+
+                orientation: 'vertical'
+
+                Button:
+                        text: 'Back to menu'
+                        on_press: root.manager.current = 'menu'
+
+                Label:
+                        id: name
+                        size_hint: (1 , 0.5)
+                        font_size: 60
+                        text: "Loading..."
+
+                Label:
+                        id: age
+                        size_hint: (1 , 0.5)
+                        font_size: 60
+                        text: "Loading..."
+
+                Label:
+                        id: guardian
+                        size_hint: (1 , 0.5)
+                        font_size: 60
+                        text: "Loading..."
+
+                Label:
+                        id: phone_number
+                        size_hint: (1 , 0.5)
+                        font_size: 60
+                        text: "Loading..."
+
+<GraphShort>
+
+        size_hint: 0.7 , 1
+        GridLayout:
+                size_hint_x: None
+                rows:1
+                width: self.minimum_width
+                Button:
+                        text: 'Back to menu'
+                        on_press: root.manager.current = 'menu'
+
+                Label:
+                        size_hint: (1 , 0.5)
+                        font_size: 100
+                        text: "Halo Gravity\nTraction Project"
+
+                Label:
+                        id: display
+                        size_hint: (1 , 0.5)
+                        font_size: 75
+                        text: "Retrieving Data..."
+
+                Graph:
+                        size_hint: (1 , 0.5)
+                        id: graph
+                        xlabel: "Time"
+                        ylabel: "Tension"
+                        x_ticks_major: 25
+                        y_ticks_major: 10
+                        y_grid_label: True
+                        x_grid_label: True
+                        padding: 5
+                        xlog: False
+                        ylog: False
+                        x_grid: True
+                        y_grid: True
+                        xmin: -0
+                        xmax: 100
+                        ymin: -0
+                        ymax: 50
+
+<SelectTime>
+
+        RelativeLayout:
+                orientation: "vertical"
+
+                Label:
+                        id: text1
+                        text: 'Select Date and Time Range'
+                        font_size: 60
+                        size_hint: (0.2 , 0.2)
+                        pos_hint: {'center_x' : 0.5 , 'top': 1}
+                
+                Spinner:
+                        id: month
+                        values: ['Jan' , 'Feb' , 'Mar' , 'Apr' , 'May' , 'Jun' , 'Jul' , 'Aug' , 'Sep' , 'Oct' , 'Nov' , 'Dec']
+                        size_hint: (0.2 , 0.2)
+                        pos_hint: {'center_x' : 0.25 , 'top': 0.7}
+                        
+                Spinner:
+                        id: day
+                        values: ['1' , '2' , '3' , '4' , '5' , '6' , '7' , '8' , '9' , '10' , '11' , '12' , '13' , '14' , '15' , '16' , '17' , '18' , '19' , '20' , '21' , '22' , '23' , '24' , '25' , '26' , '27' , '28' , '29' , '30' , '31']
+                        size_hint: (0.2 , 0.2)
+                        pos_hint: {'center_x' : 0.75 , 'top': 0.7}
+                
+                Spinner:
+                        id: start_hour
+                        values: ['1:00' , '2:00' , '3:00' , '4:00' , '5:00' , '6:00' , '7:00' , '8:00' , '9:00' , '10:00' , '11:00' , '12:00' , '13:00' , '14:00' , '15:00' , '16:00' , '17:00' , '18:00' , '19:00' , '20:00' , '21:00' , '22:00' , '23:00']
+                        size_hint: (0.2 , 0.2)
+                        pos_hint: {'center_x' : 0.25 , 'top': 0.4}
+                
+                Spinner:
+                        id: end_hour
+                        values: ['2:00' , '3:00' , '4:00' , '5:00' , '6:00' , '7:00' , '8:00' , '9:00' , '10:00' , '11:00' , '12:00' , '13:00' , '14:00' , '15:00' , '16:00' , '17:00' , '18:00' , '19:00' , '20:00' , '21:00' , '22:00' , '23:00' , '24:00']
+                        size_hint: (0.2 , 0.2)
+                        pos_hint: {'center_x' : 0.75 , 'top': 0.4}
+
+<GraphLong>
+
+        size_hint: 0.7 , 1
+        BoxLayout:
+                orientation: "vertical"
+                size: root.width , root.height
+
+                padding: 50
+                spacing: 20
+
+                Button:
+                        text: 'Back to menu'
+                        on_press: root.manager.current = 'menu'
+                
+
+                Label:
+                        size_hint: (1 , 0.5)
+                        font_size: 100
+                        text: "Halo Gravity\nTraction Project"
+
+                Label:
+                        id: display
+                        size_hint: (1 , 0.5)
+                        font_size: 75
+                        text: "Retrieving Data..."
+
+                Graph:
+                        size_hint: (1 , 0.5)
+                        id: graph
+                        xlabel: "Time"
+                        ylabel: "Tension"
+                        x_ticks_major: 25
+                        y_ticks_major: 10
+                        y_grid_label: True
+                        x_grid_label: True
+                        padding: 5
+                        xlog: False
+                        ylog: False
+                        x_grid: True
+                        y_grid: True
+                        xmin: -0
+                        xmax: 100
+                        ymin: -0
+                        ymax: 50
