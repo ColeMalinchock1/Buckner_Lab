@@ -1,0 +1,566 @@
+#:set button_fc [0.447, 0.447, 0.447, 1]
+#:set button_size (0.8 , 0.2)
+#:set button_fs 40
+
+#:set blur 20
+
+#:set white [0.98 , 0.98 , 0.98 ,1]
+#:set green [0.545 , 0.7647 , 0.29411 , 1]
+#:set black_fade [0 , 0 , 0 , 0.85]
+#:set gray [0 , 0 , 0 , 0.5]
+
+
+
+<PatientSelect>:
+
+        RelativeLayout:
+
+                Label:
+                        id: patient_window
+                        text: "Select Patient"
+                        font_size: 60
+                        color: white
+                        size_hint: (1 , 0.15)
+                        pos_hint: {'center_x': 0.5 , 'top': 1}
+                        canvas.before:
+                                Color:
+                                        rgba: green
+                                Rectangle:
+                                        pos: self.pos
+                                        size: self.size
+
+
+                Button:
+                        id: patient1
+                        text: 'Loading...'
+                        font_size: button_fs
+                        color: button_fc
+                        on_press: root.manager.current = 'menu'
+                        size_hint: button_size
+                        pos_hint: {'center_x': 0.5 , 'top': 0.8}
+                        background_normal: ''
+                        background_color: white
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+
+
+                Button:
+                        id: patient2
+                        text: 'Loading...'
+                        font_size: button_fs
+                        color: button_fc
+                        background_normal : ''
+                        background_color: white
+                        on_press: root.manager.current = 'menu'
+                        size_hint: button_size
+                        pos_hint: {'center_x': 0.5 , 'top': 0.55}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+
+                Button:
+                        id: patient3
+                        text: 'Loading...'
+                        font_size: button_fs
+                        color: button_fc
+                        background_normal : ''
+                        background_color: white
+                        on_press: root.manager.current = 'menu'
+                        size_hint: button_size
+                        pos_hint: {'center_x': 0.5 , 'top': 0.30}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+
+<MenuScreen>:
+
+
+        RelativeLayout:
+
+                padding: 50
+                spacing: 20
+
+                Label:
+                        text: "Main Menu"
+                        font_size: 60
+                        color: white
+                        size_hint: (1 , 0.15)
+                        pos_hint: {'center_x': 0.5 , 'top': 1}
+                        canvas.before:
+                                Color:
+                                        rgba: green
+                                Rectangle:
+                                        pos: self.pos
+                                        size: self.size
+
+                Button:
+                        text: 'Back'
+                        background_normal: ''
+                        background_color: white
+                        color: button_fc
+                        on_press: root.manager.current = 'patient_select'
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'x': 0.025 , 'top': 0.975}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+                        
+
+                Button:
+                        text: 'Short-Term Graph'
+                        on_press: root.manager.current = 'graph_current'
+                        font_size: button_fs
+                        color: button_fc
+                        background_normal: ''
+                        background_color: white
+                        size_hint: (0.8 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.8}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+                Button:
+                        text: 'Select Date Range'
+                        on_press: root.manager.current = 'select_time'
+                        font_size: button_fs
+                        color: button_fc
+                        background_normal: ''
+                        background_color: white
+                        size_hint: (0.8 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.55}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+        
+                Button:
+                        text: 'Patient Information'
+                        on_press: root.manager.current = 'info'
+                        font_size: button_fs
+                        color: button_fc
+                        background_normal: ''
+                        background_color: white
+                        size_hint: (0.8 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.3}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+<Info>
+
+
+        RelativeLayout:
+
+                padding: 50
+                spacing: 20
+
+                orientation: 'vertical'
+
+                Label:
+                        text: "Patient Info"
+                        font_size: 60
+                        color: white
+                        size_hint: (1 , 0.15)
+                        pos_hint: {'center_x': 0.5 , 'top': 1}
+                        canvas.before:
+                                Color:
+                                        rgba: green
+                                Rectangle:
+                                        pos: self.pos
+                                        size: self.size
+
+                Button:
+                        text: 'Back'
+                        color: button_fc
+                        background_normal: ''
+                        background_color: white
+                        on_press: root.manager.current = 'menu'
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'x': 0.025 , 'top': 0.975}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+                Label:
+                        id: name
+                        text: "Loading..."
+                        color: button_fc
+                        size_hint: (1 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.8}
+                        font_size: self.size[0] * 0.05 
+
+                Label:
+                        id: age
+                        font_size: 60
+                        text: "Loading..."
+                        color: button_fc
+                        size_hint: (1 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.6}
+                        font_size: self.size[0] * 0.05 
+
+                Label:
+                        id: guardian
+                        font_size: 60
+                        text: "Loading..."
+                        color: button_fc
+                        size_hint: (1 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.4}
+                        font_size: self.size[0] * 0.05 
+
+                Label:
+                        id: phone_number
+                        font_size: 60
+                        text: "Loading..."
+                        color: button_fc
+                        size_hint: (1 , 0.2)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.2}
+                        font_size: self.size[0] * 0.05 
+
+<GraphCurrent>
+
+        RelativeLayout:
+
+                Button:
+                        text: 'Back'
+                        background_normal: ''
+                        background_color: white
+                        color: button_fc
+                        on_press: root.manager.current = 'menu'
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'x': 0.025 , 'top': 0.975}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+                Label:
+                        text: "Current Graph"
+                        color: white
+                        size_hint: (1 , 0.15)
+                        pos_hint: {'center_x': 0.5 , 'top': 1}
+                        font_size: 40
+                        canvas.before:
+                                Color:
+                                        rgba: green
+                                Rectangle:
+                                        pos: self.pos
+                                        size: self.size
+
+                Label:
+                        id: display
+                        font_size: 75
+                        text: "Retrieving Data..."
+                        size_hint: (0.8 , 0.1)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.7}
+
+                Graph:
+                        id: graph
+                        xlabel: "Time"
+                        ylabel: "Tension"
+                        x_ticks_major: 25
+                        y_ticks_major: 10
+                        y_grid_label: True
+                        x_grid_label: True
+                        padding: 5
+                        xlog: False
+                        ylog: False
+                        x_grid: True
+                        y_grid: True
+                        xmin: -0
+                        xmax: 100
+                        ymin: -0
+                        ymax: 50
+                        size_hint: (0.8 , 0.5)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.5}
+
+<SelectTime>
+
+        RelativeLayout:
+                orientation: "vertical"
+
+                Label:
+                        text: "Select Date &\nTime Range"
+                        color: white
+                        size_hint: (1 , 0.15)
+                        pos_hint: {'center_x': 0.5 , 'top': 1}
+                        font_size: 40
+                        canvas.before:
+                                Color:
+                                        rgba: green
+                                Rectangle:
+                                        pos: self.pos
+                                        size: self.size
+
+                Button:
+                        text: 'Back'
+                        background_normal: ''
+                        background_color: white
+                        color: button_fc
+                        on_press: root.manager.current = 'menu'
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'x': 0.025 , 'top': 0.975}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+                
+                Label:
+                        text: 'Month'
+                        color: button_fc
+                        font_size: 30
+                        size_hint: (0.1 , 0.1)
+                        pos_hint: {'center_x': 0.3 , 'top': 0.8}
+
+                Spinner:
+                        id: month
+                        text: "Select"
+                        color: button_fc
+                        background_normal: ''
+                        background_color: white
+                        values: ['Jan' , 'Feb' , 'Mar' , 'Apr' , 'May' , 'Jun' , 'Jul' , 'Aug' , 'Sep' , 'Oct' , 'Nov' , 'Dec']
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'center_x' : 0.3 , 'top': 0.7}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+                Label:
+                        text: 'Day'
+                        color: button_fc
+                        font_size: 30
+                        size_hint: (0.1 , 0.1)
+                        pos_hint: {'center_x': 0.7 , 'top': 0.8}
+                        
+                Spinner:
+                        id: day
+                        text: "Select"
+                        color: button_fc
+                        background_normal: ''
+                        background_color: white
+                        values: ['1' , '2' , '3' , '4' , '5' , '6' , '7' , '8' , '9' , '10' , '11' , '12' , '13' , '14' , '15' , '16' , '17' , '18' , '19' , '20' , '21' , '22' , '23' , '24' , '25' , '26' , '27' , '28' , '29' , '30' , '31']
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'center_x' : 0.7 , 'top': 0.7}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+
+                Label:
+                        text: 'Start Time'
+                        color: button_fc
+                        font_size: 30
+                        size_hint: (0.1 , 0.1)
+                        pos_hint: {'center_x': 0.3 , 'top': 0.5}
+                
+                Spinner:
+                        id: start_hour
+                        text: "Select"
+                        color: button_fc
+                        background_normal: ''
+                        background_color: white
+                        values: ['1:00' , '2:00' , '3:00' , '4:00' , '5:00' , '6:00' , '7:00' , '8:00' , '9:00' , '10:00' , '11:00' , '12:00' , '13:00' , '14:00' , '15:00' , '16:00' , '17:00' , '18:00' , '19:00' , '20:00' , '21:00' , '22:00' , '23:00']
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'center_x' : 0.3 , 'top': 0.4}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+
+                Label:
+                        text: 'End Time'
+                        color: button_fc
+                        font_size: 30
+                        size_hint: (0.1 , 0.1)
+                        pos_hint: {'center_x': 0.7 , 'top': 0.5}
+                
+                Spinner:
+                        id: end_hour
+                        text: "Select"
+                        color: button_fc
+                        background_normal: ''
+                        background_color: white
+                        values: ['2:00' , '3:00' , '4:00' , '5:00' , '6:00' , '7:00' , '8:00' , '9:00' , '10:00' , '11:00' , '12:00' , '13:00' , '14:00' , '15:00' , '16:00' , '17:00' , '18:00' , '19:00' , '20:00' , '21:00' , '22:00' , '23:00' , '24:00']
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'center_x' : 0.7 , 'top': 0.4}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+                Button:
+                        id: generate_graph
+                        text: 'Generate Graph'
+                        color: button_fc
+                        background_normal: ''
+                        background_color: white
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.2}
+                        on_press: root.manager.current = 'graph_range'
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: blur if self.state == "normal" else 50
+
+<GraphRange>
+
+        RelativeLayout:
+
+                Label:
+                        text: "Selected Time Range"
+                        color: white
+                        size_hint: (1 , 0.15)
+                        pos_hint: {'center_x': 0.5 , 'top': 1}
+                        font_size: 40
+                        canvas.before:
+                                Color:
+                                        rgba: green
+                                Rectangle:
+                                        pos: self.pos
+                                        size: self.size
+
+                Button:
+                        text: 'Back'
+                        background_normal: ''
+                        background_color: white
+                        color: button_fc
+                        on_press: root.manager.current = 'menu'
+                        size_hint: (0.2 , 0.1)
+                        pos_hint: {'x': 0.025 , 'top': 0.975}
+                        canvas.before:
+                                Color:
+                                        rgba: black_fade
+                                BoxShadow:
+                                        pos: self.pos
+                                        size: self.size
+                                        offset: 0 , -10
+                                        spread_radius: -20 , -20
+                                        border_radius: 10 , 10 , 10 , 10
+                                        blur_radius: 20 if self.state == "normal" else 50
+
+                Graph:
+                        id: graph
+                        xlabel: "Time (hrs)"
+                        ylabel: "Tension (lb)"
+                        x_ticks_major: 25
+                        y_ticks_major: 10
+                        y_grid_label: True
+                        x_grid_label: True
+                        padding: 5
+                        xlog: False
+                        ylog: False
+                        x_grid: True
+                        y_grid: True
+                        xmin: -0
+                        xmax: 100
+                        ymin: -0
+                        ymax: 50
+                        size_hint: (0.8 , 0.5)
+                        pos_hint: {'center_x': 0.5 , 'top': 0.5}
+                        label_options: {'color': button_fc}
+                        border_color: button_fc
+                        tick_color: button_fc
