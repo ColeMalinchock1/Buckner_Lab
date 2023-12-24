@@ -1334,13 +1334,11 @@ class scoliosisUi(QWidget):
         self.referenceUnit = -66090
         setHX711 = False
         if setHX711:
-            print("HX711 is setting up")
             self.hx = HX711(5, 6)
             self.hx.set_reading_format("MSB", "MSB")
             self.hx.set_reference_unit(self.referenceUnit)
             self.hx.reset()
             self.hx.tare()
-            print("HX711 is setup")
         
         # Range of deadband and slow mode
         self.dead_band_range = 1.0
@@ -1349,8 +1347,6 @@ class scoliosisUi(QWidget):
         # Schedule initialization
         self.scheduleOn = False
         
-
-
         # JSON SERVER SETUP
         import requests
         import json
@@ -1400,7 +1396,7 @@ class scoliosisUi(QWidget):
         }
 
         self.keep_waiting = False
-        self.last_time = time.time()
+        self.last_time_JSON = time.time()
             
 
         # Arrays for tension history
@@ -1427,10 +1423,10 @@ class scoliosisUi(QWidget):
         # Set Time Delay Variable
         self.setTimeDelay = 0.00
         self.ui.timeDelayLCD.display(self.setTimeDelay)
+        self.last_time_delay = time.time()
 
         # Initializing count between each cycle
         self.count = 0
-
 
         # MANUAL SET TENSION SCREEN #
         self.ui.keypad1.clicked.connect(lambda: self.manualSetTension(1))
@@ -1498,13 +1494,23 @@ class scoliosisUi(QWidget):
 
         # creating a timer object for graph test
         timer = QTimer(self)
+
         # adding action to timer
         # UPDATES EVERY 0.1 SECOND
-        # \
+
+        # Updating the measured weight
         timer.timeout.connect(self.updateWeight)
-        # timer.timeout.connect(self.arrayAppend)
+
+        # Updating the schedule
+        timer.timeout.connect(self.updateSchedule)
+
+        # The controller will actuate according to the measuremed weight
         timer.timeout.connect(self.controller)
-        # timer.timeout.connect(self.JSON_Server)
+
+        # Publish the measured data to the JSON Server
+        timer.timeout.connect(self.JSON_Server)
+
+        # Updates every 0.1 second
         timer.start(100)
 
     def JSON_Server(self):
@@ -1581,7 +1587,7 @@ class scoliosisUi(QWidget):
                                 # Appending new data to backup content and setting how often it updates
                                 minutes = 10
 
-                                if time.time() - last_time > 60:
+                                if time.time() - self.last_time_JSON > 60:
                                         keep_waiting = False
 
                                 if int(str(time.asctime()).split()[3][3:5]) % minutes == 0 and not keep_waiting:
@@ -1589,7 +1595,7 @@ class scoliosisUi(QWidget):
                                         updated_file_backup_content["data"][0][self.patient1_name][1]["patient data"].append(patient1_data)
                                         updated_file_backup_content["data"][1][self.patient2_name][1]["patient data"].append(patient2_data)
                                         keep_waiting = True
-                                        last_time = time.time()
+                                        self.last_time_JSON = time.time()
 
 
                         except:
@@ -1661,27 +1667,37 @@ class scoliosisUi(QWidget):
 
     # Get the tension reading from the hx711 and display it on current weight LCD
     def updateWeight(self):
+
         # self.current_tension = self.get_tension()
 
-        # Artifical Tension
+        # Artificial Tension
         self.count += 1
         self.current_tension = self.get_artificial_tension()
 
         self.currentTensionArray.append(self.current_tension)
-        if math.floor(abs(self.current_tension)) <= 0.0:
+        if math.floor(self.current_tension) <= 0.0:
             self.ui.currentWeightLCD.display(0.00)
         else:
             self.ui.currentWeightLCD.display(self.current_tension)
-
-
+        
+    def updateSchedule(self):
         # If the setpoint is changing with the schedule, update the setWeight depending on how long since the start of schedule mode
         if self.scheduleOn:
+            # Find the time since the schedule started (seconds)
             timeSinceScheduleStart = int(time.time() - self.scheduleStartTime)
+
+            # Changing the setpoint to the setpoint on the constructed array from setSchedule3 based on the time since started
             self.setWeight = self.setTensionArray[timeSinceScheduleStart]
+
+            # The LCD display will change to display the set weight
             self.ui.setTensionLCD.display(self.setWeight)
+
+            # Finding the time left on the schedule 
             timeScheduleLeft = self.setScheduleTime_Sec - timeSinceScheduleStart
             timeScheduleLeft_min = timeScheduleLeft // 60
             timeScheduleLeft_sec = timeScheduleLeft % 60
+
+            # Displaying the time left on the schedule
             self.ui.ScheduleTimeLCD.display(timeScheduleLeft_min + ":" + timeScheduleLeft_sec)
 
             # When the time on schedule is less than 1 second it turns off schedule mode
@@ -1689,31 +1705,29 @@ class scoliosisUi(QWidget):
                 self.scheduleOn = False
                 self.scheduleMode = "Schedule Mode: Off"
                 self.ui.labelScheduleMode.setText(self.scheduleMode)
+                self.ui.graphWidget.clear()
+
+        # If schedule mode is off, the LCDs on the Schedule will display 0
         else:
             self.ui.ScheduleTimeLCD.display(0)
             self.ui.ScheduleSetpointLCD.display(0)
-        
-        # Update the plot
-        self.plot(range(len(self.currentTensionArray)) , self.currentTensionArray )
-        
-
-
 
     ## Tension History Plotter Function ##
-    def plot(self, time, tension):
+    def plot(self):
+        # Max size of currentTensionArray for no schedule
+        max_size = 3600 # (~1 hour)
+
         # If tension setpoint
         if self.scheduleOn:
             self.ui.graphWidget.plot(range(int(self.setScheduleTime_Sec)) , self.setTensionArray)
-            self.ui.graphWidget.plot(time , tension)
+            self.ui.graphWidget.plot(range(int(self.setScheduleTime_Sec)) , self.currentTensionArray , pen={'color':'b', 'width':1.5})
         else:
-            self.ui.graphWidget.clear()
-            self.ui.graphWidget.plot(time , tension)
+            self.ui.graphWidget.plot(range(max_size) , self.currentTensionArray , pen={'color':'b', 'width':1.5})
 
             # If the length of the current tension array is greater than 3600 it deletes the first item in the list
-            if len(self.currentTensionArray) > 3600:
+            if len(self.currentTensionArray) > max_size:
                 self.currentTensionArray.pop(0)
             
-        
         
     ## Set Tension Keypad Function ##
     def manualSetTension(self, pressed):
@@ -1877,12 +1891,13 @@ class scoliosisUi(QWidget):
         startWeight = self.setWeight
         endWeight = self.setScheduleWeight
         self.setTensionArray = []
+        self.currentTensionArray = []
         changeInWeight = endWeight - startWeight
         timeArray = range(int(self.setScheduleTime_Sec))
 
         # Modifiers to the step
         step_wait = 60 * 20 # Number of seconds to wait at each step (20 min)
-        steps = 3
+        steps = 3 # Number of steps
 
         # Linear
         if pressed == 1:
@@ -1911,7 +1926,7 @@ class scoliosisUi(QWidget):
             self.scheduleMode = "Schedule Mode: Steps"
 
         
-        # Boolean for if the setpoint is changing (ei. schedule mode) or if it is static
+        # Boolean for if the setpoint is changing (ie. schedule mode) or if it is static
         self.scheduleOn = True
 
         self.scheduleStartTime = time.time()
@@ -1919,6 +1934,9 @@ class scoliosisUi(QWidget):
         self.ui.labelScheduleMode.setText(self.scheduleMode)
 
         self.ui.ScheduleSetpointLCD.display(self.setScheduleWeight)
+
+        # Clearing the graph if it has anything on it
+        self.ui.graphWidget.clear()
 
         # Plotting the schedule setpoints
         self.plot(range(int(self.setScheduleTime_Sec)) , self.setTensionArray)
@@ -2037,43 +2055,50 @@ class scoliosisUi(QWidget):
 
     # Controller is able to compare the current tension to the set point to see if it's within the dead band and within the slow mode range
     def controller(self):
-        #print("Updating controller")
+        # If the time is greater than or equal to the set pause period, it will continue the controls
+        if self.last_time_delay - time.time() > self.setTimeDelay:
+            # If the current tension is below the dead band the tension is increased
+            if self.setWeight - self.dead_band_range > self.current_tension:
 
-        # If the current tension is below the dead band the tension is increased
-        if self.setWeight - self.dead_band_range > self.current_tension:
+                # If the current tension is below the slow mode range the speed is fast
+                if self.setWeight - self.slow_mode_range > self.current_tension:
+                    GPIO.output(self.slow_mode , GPIO.HIGH)
+                    speed = "Fast"
+                else:
+                    GPIO.output(self.slow_mode , GPIO.LOW)
+                    speed = "Slow"
+                GPIO.output(self.increase_tension , GPIO.HIGH)
+                GPIO.output(self.decrease_tension , GPIO.LOW)
+                turning_direction = "Increasing Tension"
+            
+            # If the current tension is above the dead band the tension is decreased
+            elif self.setWeight + self.dead_band_range < self.current_tension:
 
-            # If the current tension is below the slow mode range the speed is fast
-            if self.setWeight - self.slow_mode_range > self.current_tension:
-                GPIO.output(self.slow_mode , GPIO.HIGH)
-                speed = "Fast"
+                # If the current tension is above the slow mode range the speed is fast
+                if self.setWeight + self.slow_mode_range < self.current_tension:
+                    GPIO.output(self.slow_mode , GPIO.HIGH)
+                    speed = "Fast"
+                else:
+                    GPIO.output(self.slow_mode , GPIO.LOW)
+                    speed = "Slow"
+                GPIO.output(self.decrease_tension , GPIO.HIGH)
+                GPIO.output(self.increase_tension , GPIO.LOW)
+                turning_direction = "Decreasing Tension"
+            
             else:
-                GPIO.output(self.slow_mode , GPIO.LOW)
-                speed = "Slow"
-            GPIO.output(self.increase_tension , GPIO.HIGH)
-            GPIO.output(self.decrease_tension , GPIO.LOW)
-            turning_direction = "Increasing Tension"
+                speed = ""
+                turning_direction = "Stopped"
+                for i in self.output_pins:
+                    GPIO.output(i , GPIO.LOW)
+            print(speed)
+            print(turning_direction)
         
-        # If the current tension is above the dead band the tension is decreased
-        elif self.setWeight + self.dead_band_range < self.current_tension:
-
-            # If the current tension is above the slow mode range the speed is fast
-            if self.setWeight + self.slow_mode_range < self.current_tension:
-                GPIO.output(self.slow_mode , GPIO.HIGH)
-                speed = "Fast"
-            else:
-                GPIO.output(self.slow_mode , GPIO.LOW)
-                speed = "Slow"
-            GPIO.output(self.decrease_tension , GPIO.HIGH)
-            GPIO.output(self.increase_tension , GPIO.LOW)
-            turning_direction = "Decreasing Tension"
-        
+        # If it is less than the delay, no adjustments are to be made
         else:
-            speed = ""
-            turning_direction = "Stopped"
-            for i in self.output_pins:
+             turning_direction = "Stopped"
+             speed = ""
+             for i in self.output_pins:
                 GPIO.output(i , GPIO.LOW)
-        print(speed)
-        print(turning_direction)
         return turning_direction , speed
 
 
