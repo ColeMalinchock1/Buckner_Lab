@@ -1296,7 +1296,7 @@ class scoliosisUi(QWidget):
         # GPIO Pins
         self.increase_tension = 22 # Stop_R
         self.decrease_tension = 27 # Stop L
-        self.slow_mode = 17 # AIN_0
+        self.slow_mode = 17 # HOME
         self.output_pins = [self.increase_tension , self.decrease_tension , self.slow_mode]
 
         # GPIO Setup
