@@ -21,18 +21,19 @@ class Controller:
 
         # Importing libraries if modes are on
         if self.piMode:
-             from hx711 import HX711
+            import RPi.GPIO as GPIO
         if self.hxMode:
-             import RPi.GPIO as GPIO
+            from hx711 import HX711
+            
 
         # GPIO Pins
         self.increase_tension = 22 # Stop_R
         self.decrease_tension = 27 # Stop L
-        self.fast_mode = 17 # AIN_0
+        self.slow_mode = 17 # AIN_0
         self.green_led = 25
         self.yellow_led = 24
         self.red_led = 23
-        self.output_pins = [self.increase_tension , self.decrease_tension , self.fast_mode , self.green_led , self.green_led , self.green_led]
+        self.output_pins = [self.increase_tension , self.decrease_tension , self.slow_mode , self.green_led , self.red_led , self.yellow_led]
 
         if self.piMode:
 
@@ -45,7 +46,7 @@ class Controller:
             # Setting up all pins as OUT
             GPIO.setup(self.increase_tension , GPIO.OUT)
             GPIO.setup(self.decrease_tension , GPIO.OUT)
-            GPIO.setup(self.fast_mode , GPIO.OUT)
+            GPIO.setup(self.slow_mode , GPIO.OUT)
             GPIO.setup(self.red_led , GPIO.OUT)
             GPIO.setup(self.green_led , GPIO.OUT)
             GPIO.setup(self.yellow_led , GPIO.OUT)
@@ -96,7 +97,7 @@ class Controller:
         
         # Range of deadband and slow mode
         self.dead_band_range = 1.0
-        self.fast_mode_range = 5.0
+        self.slow_mode_range = 3.0
 
         # Schedule initialization
         self.scheduleOn = False
@@ -648,9 +649,10 @@ class Controller:
 
         return self.val
 
-    # Controller is able to compare the current tension to the set point to see if it's within the dead band and within the slow mode range
-    def controller(self):
-
+    # Controls is able to compare the current tension to the set point to see if it's within the dead band and within the slow mode range
+    def controls(self):
+        import RPi.GPIO as GPIO
+        self.current_tension = self.get_tension()
         # If the time is greater than or equal to the set pause period, it will continue the controls
         if time.time() - self.last_time_delay > self.setTimeDelay:
 
@@ -658,13 +660,13 @@ class Controller:
             if (self.setWeight - self.dead_band_range) > self.current_tension:
 
                 # If the current tension is below the slow mode range the speed is fast
-                if self.setWeight - self.fast_mode_range > self.current_tension:
-                    GPIO.output(self.fast_mode , GPIO.HIGH)
-                    GPIO.output(self.yellow_led , GPIO.HIGH)
+                if self.setWeight - self.slow_mode_range > self.current_tension:
+                    GPIO.output(self.slow_mode , GPIO.LOW)
+                    GPIO.output(self.yellow_led , GPIO.LOW)
                     speed = "Fast"
                 else:
-                    GPIO.output(self.fast_mode , GPIO.LOW)
-                    GPIO.output(self.yellow_led , GPIO.LOW)
+                    GPIO.output(self.slow_mode , GPIO.HIGH)
+                    GPIO.output(self.yellow_led , GPIO.HIGH)
                     speed = "Slow"
                 GPIO.output(self.increase_tension , GPIO.HIGH)
                 GPIO.output(self.green_led , GPIO.HIGH)
@@ -677,13 +679,13 @@ class Controller:
             elif self.setWeight + self.dead_band_range < self.current_tension:
 
                 # If the current tension is above the slow mode range the speed is fast
-                if self.setWeight + self.fast_mode_range < self.current_tension:
-                    GPIO.output(self.fast_mode , GPIO.HIGH)
-                    GPIO.output(self.yellow_led , GPIO.HIGH)
+                if self.setWeight + self.slow_mode_range < self.current_tension:
+                    GPIO.output(self.slow_mode , GPIO.LOW)
+                    GPIO.output(self.yellow_led , GPIO.LOW)
                     speed = "Fast"
                 else:
-                    GPIO.output(self.fast_mode , GPIO.LOW)
-                    GPIO.output(self.yellow_led , GPIO.LOW)
+                    GPIO.output(self.slow_mode , GPIO.HIGH)
+                    GPIO.output(self.yellow_led , GPIO.HIGH)
                     speed = "Slow"
                 GPIO.output(self.decrease_tension , GPIO.HIGH)
                 GPIO.output(self.red_led , GPIO.HIGH)
@@ -704,7 +706,7 @@ class Controller:
              turning_direction = "Stopped"
              speed = ""
              for i in self.output_pins:
-                GPIO.output(i , GPIO.LOW)
+                GPIO.output(i+1 , GPIO.LOW)
         
         print(speed)
         print(turning_direction)
