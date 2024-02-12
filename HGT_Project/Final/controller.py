@@ -96,8 +96,8 @@ class Controller:
             
         
         # Range of deadband and slow mode
-        self.dead_band_range = 1.0
-        self.slow_mode_range = 3.0
+        self.dead_band_range = 2.0
+        self.slow_mode_range = 6.0
 
         # Schedule initialization
         self.scheduleOn = False
@@ -112,7 +112,7 @@ class Controller:
         ############### JSON SERVER SETUP ###############
 
         # Set your GitHub Personal Access Token and the repository information
-        self.access_token = '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'
+        self.access_token = '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'
         self.repository_owner = 'ColeMalinchock1'
         self.repository_name = 'HGT-JSON-Server'
 
@@ -180,6 +180,8 @@ class Controller:
         self.setTimeDelay = 0.00
         self.ui.timeDelayLCD.display(self.setTimeDelay)
         self.last_time_delay = time.time()
+        self.last_schedule_update = time.time()
+        self.set_point_time = time.time()
 
         # Initializing count between each cycle for artificial weight
         self.count = 0
@@ -275,7 +277,8 @@ class Controller:
         
     def updateSchedule(self):
         # If the setpoint is changing with the schedule, update the setWeight depending on how long since the start of schedule mode
-        if self.scheduleOn:
+        # And if it has been ~1 second since the last update
+        if self.scheduleOn and time.time() - self.last_schedule_update > 1:
 
             # Find the time since the schedule started (seconds)
             timeSinceScheduleStart = int(time.time() - self.scheduleStartTime)
@@ -301,6 +304,9 @@ class Controller:
                 self.setTensionArray = []
                 self.ui.labelScheduleMode.setText(self.scheduleMode)
                 self.ui.graphWidget.clear()
+            
+            # Setting this as the last time the schedule has been updated
+            self.set_schedule_update = time.time()
 
         # If schedule mode is off, the LCDs on the Schedule will display 0
         else:
@@ -654,7 +660,7 @@ class Controller:
         import RPi.GPIO as GPIO
         self.current_tension = self.get_tension()
         # If the time is greater than or equal to the set pause period, it will continue the controls
-        if time.time() - self.last_time_delay > self.setTimeDelay:
+        if time.time() - self.last_time_delay > self.setTimeDelay and time.time() - self.set_point_time > 2:
 
             # If the current tension is below the dead band the tension is increased
             if (self.setWeight - self.dead_band_range) > self.current_tension:
@@ -698,6 +704,7 @@ class Controller:
             else:
                 speed = ""
                 turning_direction = "Stopped"
+                self.set_point_time = time.time()
                 for i in self.output_pins:
                     GPIO.output(i , GPIO.LOW)
         
@@ -713,165 +720,165 @@ class Controller:
         return turning_direction , speed
     
     def JSON_Server(self):
-                import requests
-                import json
-                import base64
+        import requests
+        import json
+        import base64
 
-                # Opening the local file and getting the contents
-                with open(self.file_path , 'r') as file1 , open(self.file_backup_path , 'r') as file2:
-                        updated_file_content = json.loads(file1.read())
-                        updated_file_backup_content = json.loads(file2.read())
+        # Opening the local file and getting the contents
+        with open(self.file_path , 'r') as file1 , open(self.file_backup_path , 'r') as file2:
+                updated_file_content = json.loads(file1.read())
+                updated_file_backup_content = json.loads(file2.read())
 
-                # Getting time
-                timer = time.time()
+        # Getting time
+        timer = time.time()
 
-                # Getting date
-                date = str(time.asctime())
+        # Getting date
+        date = str(time.asctime())
 
-                # Formatted so that date is Month , Day , Time (hr:mi:se)
-                date = date.split()
-                date = date[1:4]
+        # Formatted so that date is Month , Day , Time (hr:mi:se)
+        date = date.split()
+        date = date[1:4]
 
-                # Getting tension
-                tension = self.current_tension
+        # Getting tension
+        tension = self.current_tension
 
-                # Tension setpoint
-                tension_setpoint = 12
+        # Tension setpoint
+        tension_setpoint = 12
 
-                # Creating new data on tension and time
-                patient1_data = {
-                "date": date,
-                "time": timer,
-                "tension": str(tension),
-                "tension_setpoint": str(tension_setpoint)
-                }
+        # Creating new data on tension and time
+        patient1_data = {
+        "date": date,
+        "time": timer,
+        "tension": str(tension),
+        "tension_setpoint": str(tension_setpoint)
+        }
 
-                patient2_data = {
-                "date": date,
-                "time": timer,
-                "tension": str((tension + 1) * 2),
-                "tension_setpoint": str(tension_setpoint)
-                }
-                
+        patient2_data = {
+        "date": date,
+        "time": timer,
+        "tension": str((tension + 1) * 2),
+        "tension_setpoint": str(tension_setpoint)
+        }
+        
 
-                # Range of short graph
-                # 1 hour range (Every 0.1 second)
-                max_size = 36000
-                try:
-                        if len(updated_file_content["data"][0][self.patient1_name][1]["patient data"]) > max_size:
-                                updated_file_content["data"][0][self.patient1_name][1]["patient data"].pop(0)
-                                updated_file_content["data"][1][self.patient2_name][1]["patient data"].pop(0)
-                                print("Removing old data")
-                        else:
-                                pass
-                except:
-                        print("Making new patient")
+        # Range of short graph
+        # 1 hour range (Every 0.1 second)
+        max_size = 36000
+        # try:
+        if len(updated_file_content["data"][0][self.patient1_name][1]["patient data"]) > max_size:
+                updated_file_content["data"][0][self.patient1_name][1]["patient data"].pop(0)
+                updated_file_content["data"][1][self.patient2_name][1]["patient data"].pop(0)
+                print("Removing old data")
+        else:
+                pass
+        # except:
+        #         print("Making new patient")
 
-                # Try to add data to current patient, if patient not found, it creates a new patient in the dict and adds the data there.
-                try:
+        # Try to add data to current patient, if patient not found, it creates a new patient in the dict and adds the data there.
+        #try:
 
-                        # Appending new data to current patient
-                        print("Appending new data to current patient")
-                        updated_file_content["data"][0][self.patient1_name][1]["patient data"].append(patient1_data)
-                        updated_file_content["data"][1][self.patient2_name][1]["patient data"].append(patient2_data)
+        # Appending new data to current patient
+        print("Appending new data to current patient")
+        updated_file_content["data"][0][self.patient1_name][1]["patient data"].append(patient1_data)
+        updated_file_content["data"][1][self.patient2_name][1]["patient data"].append(patient2_data)
 
-                        # Appending new data to backup content and setting how often it updates
-                        minutes = 10
+        # Appending new data to backup content and setting how often it updates
+        minutes = 10
 
-                        if time.time() - self.last_time_JSON > 60:
-                                keep_waiting = False
+        if time.time() - self.last_time_JSON > 60:
+                keep_waiting = False
 
-                        if int(str(time.asctime()).split()[3][3:5]) % minutes == 0 and not keep_waiting:
-                                print("Appending new data to backup")
-                                updated_file_backup_content["data"][0][self.patient1_name][1]["patient data"].append(patient1_data)
-                                updated_file_backup_content["data"][1][self.patient2_name][1]["patient data"].append(patient2_data)
-                                keep_waiting = True
-                                self.last_time_JSON = time.time()
-
-
-                except:
-                        # Creating dict for patient information
-                        patient1_info = {"info": [self.patient1_info]}
-                        patient2_info = {"info": [self.patient2_info]}
-
-                        patient1_data = {"patient data": [patient1_data]}
-                        patient2_data = {"patient data": [patient2_data]}
-
-                        i = len(updated_file_content["data"])
-
-                        # Appending new patient dict and the new data
-                        updated_file_content["data"].append({self.patient1_name: [patient1_info]})
-                        updated_file_content["data"][i][self.patient1_name].append(patient1_data)
-
-                        updated_file_content["data"].append({self.patient2_name: [patient2_info]})
-                        updated_file_content["data"][i + 1][self.patient2_name].append(patient2_data)
+        if int(str(time.asctime()).split()[3][3:5]) % minutes == 0 and not keep_waiting:
+                print("Appending new data to backup")
+                updated_file_backup_content["data"][0][self.patient1_name][1]["patient data"].append(patient1_data)
+                updated_file_backup_content["data"][1][self.patient2_name][1]["patient data"].append(patient2_data)
+                keep_waiting = True
+                self.last_time_JSON = time.time()
 
 
-                        updated_file_backup_content["data"].append({self.patient1_name: [patient1_info]})
-                        updated_file_backup_content["data"][i][self.patient1_name].append(patient1_data)
+        # except:
+        #         # Creating dict for patient information
+        #         patient1_info = {"info": [self.patient1_info]}
+        #         patient2_info = {"info": [self.patient2_info]}
 
-                        updated_file_backup_content["data"].append({self.patient2_name: [patient2_info]})
-                        updated_file_backup_content["data"][i + 1][self.patient2_name].append(patient2_data)
+        #         patient1_data = {"patient data": [patient1_data]}
+        #         patient2_data = {"patient data": [patient2_data]}
 
-                        print("Patients created")
+        #         i = len(updated_file_content["data"])
 
-                # Writing the updated file to the local computer
-                with open(self.file_path , 'w') as file1 , open(self.file_backup_path , 'w') as file2:
-                        json.dump(updated_file_content , file1 , indent = 4)
-                        json.dump(updated_file_backup_content , file2 , indent = 4)
-                        print("Data added to local file")
+        #         # Appending new patient dict and the new data
+        #         updated_file_content["data"].append({self.patient1_name: [patient1_info]})
+        #         updated_file_content["data"][i][self.patient1_name].append(patient1_data)
 
-                if time.time() - self.last_time_get_JSON > self.wait_time:
-                    # Making a GET request for current file from GitHub
-                    response = requests.get(self.api_url, headers=self.headers)
-                    response_backup = requests.get(self.api_backup_url , headers = self.headers)
-                    self.last_time_get_JSON = time.time()
+        #         updated_file_content["data"].append({self.patient2_name: [patient2_info]})
+        #         updated_file_content["data"][i + 1][self.patient2_name].append(patient2_data)
 
-                
-                    # If GET request is approved
-                    if (response.status_code == 200 and response_backup.status_code == 200):
 
-                            # Receiving current data
-                            current_data = response.json()
-                            current_sha = current_data['sha']
+        #         updated_file_backup_content["data"].append({self.patient1_name: [patient1_info]})
+        #         updated_file_backup_content["data"][i][self.patient1_name].append(patient1_data)
 
-                            current_backup_data = response_backup.json()
-                            current_backup_sha = current_backup_data['sha']
+        #         updated_file_backup_content["data"].append({self.patient2_name: [patient2_info]})
+        #         updated_file_backup_content["data"][i + 1][self.patient2_name].append(patient2_data)
 
-                            # Create the updated file using local data
-                            updated_file = {
-                            'message': 'Update JSON file',
-                            'content': base64.b64encode(json.dumps(updated_file_content).encode()).decode(),
-                            'sha': current_sha  # Include the current sha
-                            }
+        #         print("Patients created")
 
-                            updated_backup_file = {
-                            'message': 'Update backup JSON file',
-                            'content': base64.b64encode(json.dumps(updated_file_backup_content).encode()).decode(),
-                            'sha': current_backup_sha  # Include the current sha
-                            }
+        # Writing the updated file to the local computer
+        with open(self.file_path , 'w') as file1 , open(self.file_backup_path , 'w') as file2:
+                json.dump(updated_file_content , file1 , indent = 4)
+                json.dump(updated_file_backup_content , file2 , indent = 4)
+                print("Data added to local file")
 
-                            # Send a PUT request to update the file
-                            response = requests.put(self.api_url, headers = self.headers , json = updated_file)
-                            response_backup = requests.put(self.api_backup_url , headers = self.headers , json = updated_backup_file)
-                            self.last_time_put_JSON = time.time()
+        # if time.time() - self.last_time_get_JSON > self.wait_time:
+        #     # Making a GET request for current file from GitHub
+        #     response = requests.get(self.api_url, headers=self.headers)
+        #     response_backup = requests.get(self.api_backup_url , headers = self.headers)
+        #     self.last_time_get_JSON = time.time()
 
-                            # If statement for put request
-                            if response.status_code == 200:
-                                    print('File successfully updated on GitHub')
-                            else:
-                                    print('Failed to update the file. Status code: ' , response.status_code)
-                                    print('Response: ' , response.json)
+        
+        #     # If GET request is approved
+        #     if (response.status_code == 200 and response_backup.status_code == 200):
 
-                            # If statement for put request
-                            if response_backup.status_code == 200:
-                                    print('File successfully updated on GitHub')
-                            else:
-                                    print('Failed to update the file. Status code: ' , response_backup.status_code)
-                                    print('Response: ' , response_backup.json)
+        #             # Receiving current data
+        #             current_data = response.json()
+        #             current_sha = current_data['sha']
 
-                    else:
-                            print('Failed to retrieve the current file data. Status code:', response.status_code)
-                            print('Response:', response.json())
-                else:
-                     print("Waiting to get and put on Github")
+        #             current_backup_data = response_backup.json()
+        #             current_backup_sha = current_backup_data['sha']
+
+        #             # Create the updated file using local data
+        #             updated_file = {
+        #             'message': 'Update JSON file',
+        #             'content': base64.b64encode(json.dumps(updated_file_content).encode()).decode(),
+        #             'sha': current_sha  # Include the current sha
+        #             }
+
+        #             updated_backup_file = {
+        #             'message': 'Update backup JSON file',
+        #             'content': base64.b64encode(json.dumps(updated_file_backup_content).encode()).decode(),
+        #             'sha': current_backup_sha  # Include the current sha
+        #             }
+
+        #             # Send a PUT request to update the file
+        #             response = requests.put(self.api_url, headers = self.headers , json = updated_file)
+        #             response_backup = requests.put(self.api_backup_url , headers = self.headers , json = updated_backup_file)
+        #             self.last_time_put_JSON = time.time()
+
+        #             # If statement for put request
+        #             if response.status_code == 200:
+        #                     print('File successfully updated on GitHub')
+        #             else:
+        #                     print('Failed to update the file. Status code: ' , response.status_code)
+        #                     print('Response: ' , response.json)
+
+        #             # If statement for put request
+        #             if response_backup.status_code == 200:
+        #                     print('File successfully updated on GitHub')
+        #             else:
+        #                     print('Failed to update the file. Status code: ' , response_backup.status_code)
+        #                     print('Response: ' , response_backup.json)
+
+            #else:
+             #       print('Failed to retrieve the current file data. Status code:', response.status_code)
+              #      print('Response:', response.json())
+        #else:
+        #        print("Waiting to get and put on Github")
