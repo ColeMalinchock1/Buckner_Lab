@@ -41,6 +41,23 @@ class Controller:
         # Creating the motor object that can be controlled
         self.motor = bus.get_motor(MODULE_ADDRESS)
 
+        while True:
+            try:
+                # Setting axis parameters
+                self.motor.set_axis_parameter(2, 20)
+                self.motor.set_axis_parameter(5, 1000)
+                self.motor.set_axis_parameter(6, 255)
+                self.motor.set_axis_parameter(7, 110)
+                self.motor.set_axis_parameter(214, 0)
+                break
+            except pyTMCL.reply.TrinamicException:
+                print("Motor not on")
+
+        self.motor.stop()
+
+        # Creating check variable so it does not repeat the stop
+        self.check = True
+
         # GPIO Pins
         self.increase_tension = 22 # Stop_R
         self.decrease_tension = 27 # Stop L
@@ -68,7 +85,7 @@ class Controller:
         
             # Default the output pins to low
             for i in self.output_pins:
-                GPIO.output(i , GPIO.LOW)  
+                GPIO.output(i , GPIO.HIGH)  
 
         # Initializations for keypads
         self.decimal_1 = False
@@ -111,7 +128,7 @@ class Controller:
             
         
         # Range of deadband and slow mode
-        self.dead_band_range = 2.0
+        self.dead_band_range = 1.0
         self.slow_mode_range = 6.0
 
         # Schedule initialization
@@ -123,55 +140,6 @@ class Controller:
         self.currentTensionArray = []
         self.setTensionArray = []
         self.last_time_array = time.time()
-        
-        ############### JSON SERVER SETUP ###############
-
-        # Set your GitHub Personal Access Token and the repository information
-        self.access_token = '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'
-        self.repository_owner = 'ColeMalinchock1'
-        self.repository_name = 'HGT-JSON-Server'
-
-        # Path to local json file and the name of json file on GitHub
-        self.file_path = "./HGT_Data.json"
-        self.file_backup_path = "./HGT_Backup.json"
-
-        # Define the API endpoint for creating a new file
-        self.api_url = f'https://api.github.com/repos/{self.repository_owner}/{self.repository_name}/contents/{self.file_path}'
-        self.api_backup_url = f'https://api.github.com/repos/{self.repository_owner}/{self.repository_name}/contents/{self.file_backup_path}'
-
-        self.headers = {
-        'Authorization': f'token {self.access_token}'
-        }
-
-        self.patient1_name = "Cole Malinchock"
-        self.patient1_age = "20"
-        self.patient1_guardian = "Mike and Laura Malinchock"
-        self.patient1_number = "919-240-4776"
-
-        self.patient2_name = "John Bullock"
-        self.patient2_age = "12"
-        self.patient2_guardian = "Amy and Kelley Bullock"
-        self.patient2_number = "919-547-3245"
-
-        self.patient1_info = {
-        "name": self.patient1_name,
-        "age": self.patient1_age,
-        "guardian": self.patient1_guardian,
-        "phone number": self.patient1_number
-        }
-
-        self.patient2_info = {
-        "name": self.patient2_name,
-        "age": self.patient2_age,
-        "guardian": self.patient2_guardian,
-        "phone number": self.patient2_number
-        }
-
-        self.keep_waiting = False
-        self.last_time_JSON = time.time()
-        self.last_time_get_JSON = time.time()
-        self.last_time_put_JSON = time.time()
-        self.JSON_connected = False
 
         # Time in between puts and gets to stay under the 5000 an hour limit
         self.wait_time = 4 # Seconds
@@ -677,6 +645,7 @@ class Controller:
 
         # Getting the most current tension
         self.current_tension = self.get_tension()
+
         # If the time is greater than or equal to the set pause period, it will continue the controls
         if time.time() - self.last_time_delay > self.setTimeDelay:
             
@@ -684,29 +653,39 @@ class Controller:
             diff = self.setWeight - self.current_tension
 
             # Coefficient of speed
-            k = 1
+            k = 3
 
             # Setting the speed of the motor based on the distance to the setpoint
-            velocity = diff * k
+            velocity = abs(diff * k)
 
             # If the difference is negative and outside the dead band range, the tension is decreased
             if (diff + self.dead_band_range) < 0:
-                self.motor.rotate_left(velocity)
+                self.motor.rotate_right(velocity)
+                self.check = True
                 GPIO.output(self.red_led, GPIO.HIGH)
                 GPIO.output(self.green_led, GPIO.LOW)
                 speed = str(velocity)
                 turning_direction = "Decreasing Tension"
 
             # If the difference is positive and outside the dead band range, the tension is increased
-            if (diff - self.dead_band_range) > 0:
-                self.motor.rotate_right(velocity)
+            elif (diff - self.dead_band_range) > 0:
+                self.motor.rotate_left(velocity)
+                self.check = True
                 GPIO.output(self.green_led, GPIO.HIGH)
                 GPIO.output(self.red_led, GPIO.LOW)
                 speed = str(velocity)
                 turning_direction = "Increasing Tension"
             
             else:
-                self.motor.stop()
+                if self.check:
+                    holding_current = 5 * self.current_tension
+                    if holding_current > 255:
+                        holding_current = 255
+                    self.motor.set_axis_parameter(7, 5 * self.current_tension)
+                    # self.motor.move_relative(-1234)
+                    self.motor.stop()
+                    self.check = False
+                    print("Set point reached")
                 speed = ""
                 turning_direction = "Stopped"
                 GPIO.output(self.green_led, GPIO.LOW)
@@ -716,13 +695,11 @@ class Controller:
         
         # If it is less than the delay, no adjustments are to be made
         else:
-            self.motor.stop()
             turning_direction = "Stopped"
             speed = ""
             GPIO.output(self.green_led, GPIO.LOW)
             GPIO.output(self.red_led, GPIO.LOW)
             
-        
         print(speed)
         print(turning_direction)
     
