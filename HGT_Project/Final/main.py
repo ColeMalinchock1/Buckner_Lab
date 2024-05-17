@@ -41,19 +41,9 @@ if __name__ == "__main__":
         piMode = True
         setHX711 = True
 
-        # Create instances of the GUI and Controller
+        # Create instances of the GUI, JSON_Server, and Controller
         gui = Ui_Form()
         controller = Controller(gui , piMode, setHX711)
-
-        # def thread_function():
-        #     while True:
-        #         print("Threading")
-        #         controller.updateWeight()
-        #         controller.controls()
-
-        # Starting thread for controls
-        # x = threading.Thread(target=thread_function)
-        # x.start()
 
         # Creating a timer that will constantly loop the following methods
         timer = QTimer()
@@ -64,14 +54,14 @@ if __name__ == "__main__":
         # Updating the schedule
         timer.timeout.connect(controller.updateSchedule)
 
-        # # The controller will actuate according to the measured weight
+        # The controller will actuate according to the measured weight
         timer.timeout.connect(controller.controls)
+
+        # Save the file locally and upload to github
+        # timer.timeout.connect(controller.save_data)
 
         # Plot the readings
         timer.timeout.connect(controller.plot_chart)
-
-        # Publish the measured data to the JSON Server
-        # timer.timeout.connect(controller.JSON_Server)
 
         # Repeat the timer every 0.1 seconds
         timer.start(100)
