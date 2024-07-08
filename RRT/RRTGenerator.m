@@ -2,7 +2,7 @@ clear;
 clc;
 
 % Number of generations
-N = 10;
+N = 80;
 
 % Set the boudnaries of the tree
 s = 0.04;
@@ -368,7 +368,6 @@ end
 
 end_points_a;
 
-for point = end_points_a
     
 
 

@@ -40,32 +40,6 @@ class Controller:
 
         # Creating the motor object that can be controlled
         self.motor = bus.get_motor(MODULE_ADDRESS)
-<<<<<<< HEAD:HGT_Project/Final/controller.py
-=======
-
-        while True:
-            try:
-                # Setting axis parameters
-                self.motor.set_axis_parameter(2, 20)
-                self.motor.set_axis_parameter(5, 20)
-                self.motor.set_axis_parameter(6, 255)
-                self.motor.set_axis_parameter(7, 255)
-                self.motor.set_axis_parameter(4, 10)
-                self.motor.set_axis_parameter(214, 200)
-                break
-            except pyTMCL.reply.TrinamicException:
-                print("Motor not on")
-
-        self.motor.stop()
-
-        # Creating check variable so it does not repeat the stop
-        self.check = True
-
-        # Initializing PID
-        self.last_time_pid = time.time()
-        self.I = 0
-        self.previous_error = 0
->>>>>>> 5986dee904c262be69490f562ab75e0d7ef0ec79:HGT_Project/controller.py
 
         # GPIO Pins
         self.increase_tension = 22 # Stop_R
@@ -137,16 +111,8 @@ class Controller:
             
         
         # Range of deadband and slow mode
-<<<<<<< HEAD:HGT_Project/Final/controller.py
         self.dead_band_range = 2.0
         self.slow_mode_range = 6.0
-=======
-        self.dead_band_range = 1.0
-        self.initial_dead_band_range = 0.2
-
-        # If the set point has been reached
-        self.setpoint_reached = False
->>>>>>> 5986dee904c262be69490f562ab75e0d7ef0ec79:HGT_Project/controller.py
 
         # Schedule initialization
         self.scheduleOn = False
@@ -158,7 +124,6 @@ class Controller:
         self.currentTensionArrayTime = []
         self.setTensionArray = []
         self.last_time_array = time.time()
-<<<<<<< HEAD:HGT_Project/Final/controller.py
         
         ############### JSON SERVER SETUP ###############
 
@@ -208,8 +173,6 @@ class Controller:
         self.last_time_get_JSON = time.time()
         self.last_time_put_JSON = time.time()
         self.JSON_connected = False
-=======
->>>>>>> 5986dee904c262be69490f562ab75e0d7ef0ec79:HGT_Project/controller.py
 
         # Time in between puts and gets to stay under the 5000 an hour limit
         self.wait_time = 4 # Seconds
@@ -754,17 +717,9 @@ class Controller:
 
     # Controls is able to compare the current tension to the set point to see if it's within the dead band and within the slow mode range
     def controls(self):
-<<<<<<< HEAD:HGT_Project/Final/controller.py
         
         import RPi.GPIO as GPIO
 
-=======
-
-        import RPi.GPIO as GPIO
-
-        current_coefficient = 10.0
-
->>>>>>> 5986dee904c262be69490f562ab75e0d7ef0ec79:HGT_Project/controller.py
         # Getting the most current tension
         self.current_tension = self.get_tension()
 
@@ -777,7 +732,6 @@ class Controller:
 
         # If the time is greater than or equal to the set pause period, it will continue the controls
         if time.time() - self.last_time_delay > self.setTimeDelay:
-<<<<<<< HEAD:HGT_Project/Final/controller.py
             
             # Finding the difference between the set point and current tension
             diff = self.setWeight - self.current_tension
@@ -816,109 +770,14 @@ class Controller:
         # If it is less than the delay, no adjustments are to be made
         else:
             self.motor.stop()
-=======
-            
-            offset = 0.0
-
-            # Finding the difference between the set point and current tension
-            error = self.setWeight - self.current_tension
-
-            # Setting the speed of the motor based on the distance to the setpoint
-            steps = self.PID_Step(error)
-            velocity = self.PID_Velocity(error)
-
-            self.motor.set_axis_parameter(4, velocity)
-            if self.setpoint_reached:
-
-                # If the difference is negative and outside the dead band range, the tension is decreased
-                if (error + self.dead_band_range) < 0:
-                    self.motor.move_relative(steps)
-                    self.check = True
-                    GPIO.output(self.red_led, GPIO.HIGH)
-                    GPIO.output(self.green_led, GPIO.LOW)
-                    GPIO.output(self.clear_led, GPIO.LOW)
-                    speed = str(steps)
-                    turning_direction = "Decreasing Tension"
-                    self.setpoint_reached = False
-
-
-                # If the difference is positive and outside the dead band range, the tension is increased
-                elif (error - self.dead_band_range) > 0:
-                    self.motor.move_relative(-steps)
-                    self.check = True
-                    GPIO.output(self.green_led, GPIO.HIGH)
-                    GPIO.output(self.red_led, GPIO.LOW)
-                    GPIO.output(self.clear_led, GPIO.LOW)
-                    speed = str(steps)
-                    turning_direction = "Increasing Tension"
-                    self.setpoint_reached = False
-                    
-                else:
-                    self.previous_error = 0
-                    self.I = 0
-                    self.last_time_pid = time.time()
-                    if self.check:
-                        self.motor.set_axis_parameter(7, standby_current)
-
-                        self.motor.stop()
-                        self.check = False
-                    speed = ""
-                    turning_direction = "Stopped"
-                    GPIO.output(self.green_led, GPIO.LOW)
-                    GPIO.output(self.red_led, GPIO.LOW)
-                    GPIO.output(self.clear_led, GPIO.HIGH)
-                
-            else:
-                # If the difference is negative and outside the dead band range, the tension is decreased
-                if (error + offset + self.initial_dead_band_range) < 0:
-                    self.motor.move_relative(steps)
-                    self.check = True
-                    GPIO.output(self.red_led, GPIO.HIGH)
-                    GPIO.output(self.green_led, GPIO.LOW)
-                    GPIO.output(self.clear_led, GPIO.LOW)
-                    speed = str(steps)
-                    turning_direction = "Decreasing Tension"
-                    self.setpoint_reached = False
-
-
-                # If the difference is positive and outside the dead band range, the tension is increased
-                elif (error + offset - self.initial_dead_band_range) > 0:
-                    self.motor.move_relative(-steps)
-                    self.check = True
-                    GPIO.output(self.green_led, GPIO.HIGH)
-                    GPIO.output(self.red_led, GPIO.LOW)
-                    GPIO.output(self.clear_led, GPIO.LOW)
-                    speed = str(steps)
-                    turning_direction = "Increasing Tension"
-                    self.setpoint_reached = False
-                    
-                else:
-                    if self.check:
-                        self.motor.set_axis_parameter(7, standby_current)
-                        
-                        self.motor.stop()
-                        self.check = False
-                    speed = ""
-                    turning_direction = "Stopped"
-                    GPIO.output(self.green_led, GPIO.LOW)
-                    GPIO.output(self.red_led, GPIO.LOW)
-                    GPIO.output(self.clear_led, GPIO.HIGH)
-                    self.setpoint_reached = True
-        # If it is less than the delay, no adjustments are to be made
-        else:
->>>>>>> 5986dee904c262be69490f562ab75e0d7ef0ec79:HGT_Project/controller.py
             turning_direction = "Stopped"
             speed = ""
             GPIO.output(self.green_led, GPIO.LOW)
             GPIO.output(self.red_led, GPIO.LOW)
-<<<<<<< HEAD:HGT_Project/Final/controller.py
             
         
         print(speed)
         print(turning_direction)
-=======
-
->>>>>>> 5986dee904c262be69490f562ab75e0d7ef0ec79:HGT_Project/controller.py
     
     def save_data(self):
         JSON_Server.save_json(self.current_tension, self.setWeight)
