@@ -73,7 +73,11 @@ function unsuccessful = main(attempt)
     
     % Sets the MAX_TRIES for the loop that checks for conflicts
     MAX_TRIES = 9e6;
+
+    % Sets the MAX_STEPS that can be taken before breaking the while loop
+    MAX_STEPS = 4;
     
+
     % Loop through all the points in joining points
     for i = 2:N
         
@@ -83,9 +87,12 @@ function unsuccessful = main(attempt)
         % Initializes the count before the while loop
         count = 0;
     
+        % Initialize the number of steps
+        steps = 1;
+    
         % While loop that waits until there are no more conflicts detected
         while is_conflict
-    
+
             % Gets the closest arterie point to the i-th joining point and
             % adds it as the i-th starting point for arterie
             a1(i, :) = find_closest_point(i, a1, joining_points);
@@ -106,9 +113,16 @@ function unsuccessful = main(attempt)
                 is_conflict = check_conflicts(i, v1, a1, joining_points);
             end
     
+            % Checks if the count exceeds the max amount of retries with
+            % that step and adds a new step
+            if count > MAX_TRIES
+                steps = steps + 1;
+                count = 0;
+            end
+
             % Checks if the count exceeds the max amount of retries
             % Quits the session if it exceeds the max retries
-            if count > MAX_TRIES
+            if steps > MAX_STEPS
                 unsuccessful = true;
                 return;
             end
