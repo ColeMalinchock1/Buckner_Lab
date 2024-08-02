@@ -1,48 +1,27 @@
-clear;
-clc;
+% Define the arrays
+array1 = [1, 2; 3, 4; 5, 6; 7,8; 9,10;11,12;13,14;15,16;17,18];
+array2 = [3, 4; 5, 6; 7, 8;9,10;11,12;13,14;15,16;17,18;19,20];
 
-% Number of generations
-N = 100;
-
-% Set the boudnaries of the tree
-s = 0.04;
-S = s * [1, 0; 0, 1]; %4cm square
-
-% Location of the inlet
-inlet = [0, 0];
-outlet = [1, 1] * s;
-
-% arterie endpoint arrays
-a1 = zeros(N, 2);
-a2 = zeros(N, 2);
-
-% Init 1st branch of arterie
-a1(1, :) = inlet + [0.99, 0] * S;
-a2(1, :) = inlet;
-
-% Init 2nd branch of arterie
-a1(2, :) = inlet + [0, 0.99] * S;
-a2(2, :) = inlet;
-
-% Filter points
-for i = 3:N
-    a1(i, :) = rand(1, 2) * S;
-    x = a1(i, 1);
-    y = a1(i, 2);
-    while y >= -x + 0.04
-        a1(i, :) = rand(1, 2) * S;
-        x = a1(i, 1);
-        y = a1(i, 2);
-    end
-end
-
-% Plot the results for visualization
+% Initialize the figure
 figure;
 hold on;
-plot(a1(:, 1), a1(:, 2), 'ro');  % Original points in redlue
-plot([0, s], [0, s], 'k-');  % Diagonal line
-xlabel('x');
-ylabel('y');
-title('Points Filtering Based on Diagonal');
-axis equal;
+
+% Loop through each pair of points
+for i = 1:size(array1, 1)
+    % Get the corresponding points from each array
+    point1 = array1(i, :);
+    point2 = array2(i, :);
+    
+    % Plot the points and draw a line between them
+    plot([point1(1), point2(1)], [point1(2), point2(2)], 'b-o', 'LineWidth', 2);
+    pause(1.0);
+end
+
+% Set axis labels and title for better visualization
+xlabel('X-axis');
+ylabel('Y-axis');
+title('Lines between corresponding points in array1 and array2');
+axis equal; % Set equal scaling for both axes
+grid on; % Add grid for better visibility
+
 hold off;

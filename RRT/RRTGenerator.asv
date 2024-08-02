@@ -7,7 +7,7 @@ clear
 clc
 
 % Set number of branches
-N = 10; %Increase to lower resistance
+N = 500; %Increase to lower resistance
 
 % Set physical tree boundaries
 s = 0.04;
@@ -26,21 +26,32 @@ a2(1, :) = x;
 
 % Map showing topological connections between branches
 m = zeros(N, 1);
-
+S(1,1)
+S(1,2)
+S(2,1)
+S(2,2)
 % Add branches to tree
 for i = 2:1:N
     
     % Initialize the d minimum and k
     dmin = 0; % The shortest distance
     k = 0; % The number of attempts
+    boundary = 0.0008;
 
     % Loops while minimum distance is less than a minimum distance and k is
     % less than a max number of iterations
     while dmin < 5*8e-6 && k < 1000
+        
+        invalid_a1_point = true;
 
-        % Creates a random point within the bounds of the box to set at the
-        % i-th position of the a1 array
-        a1(i, :) = rand(1, 2)*S;
+        while invalid_a1_point
+            % Creates a random point within the bounds of the box to set at the
+            % i-th position of the a1 array
+            a1(i, :) = rand(1, 2)*S;
+            if a1(i, 1) < (S(1,1) - boundary) && a1(i, 1) > (S(1,2) + boundary) && a1(i, 2) < (S(1,1) - boundary) && a1(i, 2) > (S(2,1) + boundary)
+                invalid_a1_point = false;
+            end
+        end
 
         % Creates the array a4 with the size of i - 1 by 2 and all zeros
         a4 = zeros(i-1, 2);
@@ -203,7 +214,7 @@ for i = 1:size(a1, 1)
     check = true;
 
     % Loops 1 to the size of a2
-    for ij = 1:size(a2, 1)
+    for j = 1:size(a2, 1)
 
         % Checks if the i-th point in a1 is equal to the j-th a2
         % If it is then it sets check as false because that means a start
@@ -227,10 +238,14 @@ v1 = [];
 v2 = [];
 
 % Set the outlet
-v2 = [v2;[S(2, 2), S(1, 1)]];
+outlet = [S(2, 2), S(1, 1)];
+v2 = [v2; outlet];
 
-% Loops through all of the capillary points
-for i = 1:size(capillary_points, 1)
+direct_connections = zeros(size(capillary_points, 1), 1);
+
+% Loops through all of the capillary points to see which ones can be
+% connected to directly
+for i = 1:size(direct_connections, 1)
 
     % Gets the capillary point at the i-th position
     capillary_point = capillary_points(i, :);
@@ -239,16 +254,64 @@ for i = 1:size(capillary_points, 1)
     % If true, 
     if is_conflict(v2(1, :), capillary_point, a1, a2)
         fprintf("Conflict detected\n")
-        [starts, ends] = rrt_algorithm(capillary_point, v1, v2, a1, a2);
 
-        v1 = [v1; starts];
-        v2 = [v2; ends];
+        direct_connections(i) = 0;
     else
+        if sum(direct_connections) == 0
+            d = distance(capillary_point, outlet);
+
+            step_distance = d / 4;
+            vector = 
+            v2 = [v2; v2(1, :)];
+            v1 = [v1; capillary_point];
+        else
+        direct_connections(i) = 0;
+        end
         
-        v1 = [v1; capillary_point];
-        v2 = [v2; v2(1, :)];
     end
     fprintf("point reached\n")
+
+
+
+end
+
+
+capillary_points = capillary_points(direct_connections == 0, :);
+
+distances = sqrt(sum((capillary_points - outlet).^2, 2));
+
+[~, sorted_indices] = sort(distances);
+
+capillary_points = capillary_points(sorted_indices, :);
+
+capillary_points_remaining = capillary_points;
+
+for i = 1:size(capillary_points, 1)
+    
+    capillary_point = capillary_points_remaining(1, :);
+
+    starts = [];
+    ends = [];
+
+    while isempty(starts) && isempty(ends)
+        [starts, ends] = rrt_algorithm(capillary_point, v1, v2, a1, a2);
+        
+        % If the starts and ends are empty when returned, the capillary
+        % points remaining is reshuffled
+        % Else it removes the capillary point from the remaining capillary
+        % points and adds starts and ends to v1 and v2
+        if isempty(starts) && isempty(ends)
+            capillary_points_remaining = capillary_points_remaining(randperm(size(capillary_points_remaining, 1)), :);
+            capillary_point = capillary_points_remaining()
+        else
+            idx = ismember(capillary_points_remaining, capillary_point, 'rows');
+            capillary_points_remaining(idx, :) = [];
+
+            v1 = [v1; starts];
+            v2 = [v2; ends];
+        end
+
+    end
 
 end
 
@@ -256,7 +319,7 @@ end
 % figure('Renderer', 'painters')
 hTreeFigure = figure('Visible', 'off');
 hold on
-for k = 1:1:N
+for k = 1:1:size(a1, 1)
    plot_channel(a1(k,:), a2(k,:), lw(k), 'b');
 end
 
@@ -324,68 +387,151 @@ function d = distance_to_line(p1, p2, p3)
 end
 
 % Uses an rrt algorithm to reach the outlet
-function [starts, ends] = rrt_algorithm(capillary, goal_1, goal_2, barrier_1, barrier_2)
+function [starts, ends] = rrt_algorithm(route_start, goal_1, goal_2, barrier_1, barrier_2)
     
     % Initialize keep searching as true
     keep_searching = true;
 
     % Initialze the max distance between each step
-    MAX_STEP_SIZE = 0.005;
+    MAX_STEP_SIZE = 0.01;
     MIN_STEP_SIZE = 0.0001;
+    MAX_ROUTE_SIZE = 10;
+    MIN_THETA = 30;
+    MAX_RETRIES = 3;
 
     % Initialize the temporary routes
     route_to = [];
     route_from = [];
-
+    retries = 0;
+    cla;
+    % Loops until it finds a route from start to goal
     while keep_searching
         
+        % Initialize the endpoint as invalid
+        invalid_to_point = true;
 
-        % Gets a random start point from one of the current points
-        if isempty(route_to)
-            start_point = capillary;
-        else
-            start_point = route_to(randi(size(route_to, 1)), :);
-        end
-
-        % Gets a random end point as a random distance away from the start
-        % point
-        end_point = [start_point(1) + randi([-1, 1]) * (MIN_STEP_SIZE + (MAX_STEP_SIZE - MIN_STEP_SIZE) * rand()), ...
-                     start_point(2) + randi([-1, 1]) * (MIN_STEP_SIZE + (MAX_STEP_SIZE - MIN_STEP_SIZE) * rand())];
-        
-        if isempty(route_to)
-            duplicate = false;
-        elseif isempty(find(route_to(:, 1) == end_point(1) & route_to(:, 2) == end_point(2), 1))
-            duplicate = false;
-        else
-            duplicate = true;
-        end
-
-        while (end_point(1) < 0 || end_point(1) > 0.04) || (end_point(2) < 0 || end_point(2) > 0.04) || duplicate
-            end_point = [start_point(1) + randi([-1, 1]) * (MIN_STEP_SIZE + (MAX_STEP_SIZE - MIN_STEP_SIZE) * rand()), ...
-                     start_point(2) + randi([-1, 1]) * (MIN_STEP_SIZE + (MAX_STEP_SIZE - MIN_STEP_SIZE) * rand())];
-            if ~isempty(route_to)
-                duplicate = ~isempty(find(route_to(:, 1) == end_point(1) & route_to(:, 2) == end_point(2), 1));
-            end
-        end    
-        
-        % Checks if the start to end point intersects with a barrier
-        if ~is_conflict(start_point, end_point, barrier_1, barrier_2)
+        % Loop until it finds a valid endpoint
+        while invalid_to_point
             
-            % If there is a conflict between the start and end and a goal
-            % segment, finish routing
-            if is_conflict(start_point, end_point, goal_1, goal_2)
-                end_point = get_intersection(start_point, end_point, goal_1, goal_2);
-                keep_searching = false;
+            % Initialize duplicate as true
+            duplicate = true;
+
+            % Gets a random end point that is not a duplicate
+            while duplicate
+                current_to_point = rand(1, 2)*0.04;
+                if isempty(route_to)
+                    duplicate = false;
+                elseif isempty(find(route_to(:, 1) == current_to_point(1) & route_to(:, 2) == current_to_point(2), 1))
+                    duplicate = false;
+                end
+                
             end
 
-            % Adds the current end point and start point to the to and from
-            route_to = [route_to; end_point];
-            route_from = [route_from; start_point];
+            % Initializes the shortest distance
+            shortest_distance = 6e5;
+            
+            % Checks if the route from list is empty and if it is, it sets
+            % the to and from point and the distance between them
+            if isempty(route_from)
+                shortest_distance = distance(current_to_point, route_start);
+                to_point = current_to_point;
+                from_point = route_start;
+            else
+                % Loops through all of the start points
+                for p = 1:size(route_to, 1)
+                    
+                    point = route_to(p, :);
+    
+                    % Gets the distance from the start point to the current end
+                    % point
+                    d = distance(point, current_to_point);
+    
+                    % Checks if the distance is less than the current shortest
+                    % distance
+                    if d < shortest_distance
+    
+                        % Sets the new shortest disatnce, end point, and start
+                        % point
+                        shortest_distance = d;
+                        to_point = current_to_point;
+                        from_point = point;
+                    end
+                end
+            end
+            if isempty(route_to)
+                theta = 180;
+            else
+                % Gets the angle between the to and from point in degrees
+                [~, idx] = ismember(from_point, route_to, 'rows');
+    
+                previous_from_point = route_from(idx);
+    
+                theta = get_angle(to_point, from_point, previous_from_point);
+            end
 
-            % Plot the new branch
-            plot(route_to, route_from, 'b', 'LineWidth', 2);
-            pause(0.1); % Pause to visualize the new branch
+            % Checks if the shortest distance is between the max and min
+            % step size
+            if shortest_distance < MAX_STEP_SIZE && shortest_distance > MIN_STEP_SIZE && theta > MIN_THETA
+
+                % Checks that there is no conflict between any of the
+                % current lines and then exits the loop if it is valid
+                if ~is_conflict(to_point, from_point, barrier_1, barrier_2)
+                    invalid_to_point = false;
+                end
+            end
         end
+
+        
+        % If there is a conflict between the start and end and a goal
+        % segment, finish routing
+        if is_conflict(to_point, from_point, goal_1, goal_2)
+            to_point = get_intersection(to_point, from_point, goal_1, goal_2);
+            keep_searching = false;
+        end
+
+        % Adds the current end point and start point to the to and from
+        route_to = [route_to; to_point];
+        route_from = [route_from; from_point];
+        
+
+        hold on;
+
+        for j = 1:size(goal_1, 1)
+            point1 = goal_1(j, :);
+            point2 = goal_2(j, :);
+            plot([point1(1), point2(1)], [point1(2), point2(2)], 'r-', 'LineWidth', 2);
+        end
+
+        for j = 1:size(barrier_1, 1)
+            point1 = barrier_1(j, :);
+            point2 = barrier_2(j, :);
+            plot([point1(1), point2(1)], [point1(2), point2(2)], 'b-', 'LineWidth', 2);
+        end
+
+        % Plot the new branch
+        for j = 1:size(route_to, 1)
+            point1 = route_to(j, :);
+            point2 = route_from(j, :);
+
+            plot([point1(1), point2(1)], [point1(2), point2(2)], 'g-', 'LineWidth', 2);
+            pause(0.01);
+        end
+        hold off;
+
+        if MAX_ROUTE_SIZE < size(route_from, 1)
+            route_from = [];
+            route_to = [];
+            retries = retries + 1
+            cla;
+        end
+        
+        % If reaching max retries return -1
+        if retries == MAX_RETRIES
+            starts = [];
+            ends = [];
+            return
+        end
+
     end
 
     % Retraces the end (where it intersects a vein) to the beginning (the
@@ -398,11 +544,11 @@ function [starts, ends] = rrt_algorithm(capillary, goal_1, goal_2, barrier_1, ba
     
     % Set the first point for the start as what was previously the end and
     % vice versa
-    starts = [starts; end_point];
-    ends = [ends; start_point];
+    starts = [starts; to_point];
+    ends = [ends; from_point];
 
     % Loops until the last point in ends is the same as the capillary
-    while ~isequal(ends(end, :), capillary)
+    while ~isequal(ends(end, :), route_start)
 
         % Gets the last point in ends (most recently added point)
         last_ends_point = ends(end, :);
@@ -420,7 +566,24 @@ function [starts, ends] = rrt_algorithm(capillary, goal_1, goal_2, barrier_1, ba
     
 end
 
+function theta = get_angle(A, B, C)
+    BA = A - B;
+    BC = C - B;
+
+    dotProduct = dot(BA, BC);
+
+    magnitude_BA = norm(BA);
+    magnitude_BC = norm(BC);
+
+    cosTheta = dotProduct / (magnitude_BA * magnitude_BC);
+
+    theta = rad2deg(acos(cosTheta));
+
+end
+
 function point = get_intersection(p1, p2, n1, n2)
+    
+    closest_intersection = NaN(1,2);
 
     for i = 1:size(n1, 1)
         point_1 = n1(i, :);
@@ -463,14 +626,23 @@ function point = get_intersection(p1, p2, n1, n2)
         
         d12 = distance([x1, y1], [x2, y2]);
         d_intersection = distance([x1, y1], [x_intersect, y_intersect]);
-
+        fprintf("new\n")
         if (x_intersect > min([x3, x4]) && x_intersect < max([x3, x4])) && (y_intersect > min([y3, y4]) && y_intersect < max([y3, y4])) && (d_intersection < d12)
-            point = [x_intersect, y_intersect];
-            return
+            
+            % Need to fix this so it goes to the closest intersection
+            if isnan(closest_intersection(1, 1))
+                closest_intersection = [x_intersect, y_intersect];
+            else
+                current_shortest_distance = distance(closest_intersection, [x1, x2]);
+                if current_shortest_distance > d_intersection
+                    closest_intersection = [x_intersect, y_intersect];
+                end
+            end
+
         end
 
     end
-    
+    point = closest_intersection;
 end
 
 % Checks if there are any conflicts when trying to reach a point
