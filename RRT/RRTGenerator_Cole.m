@@ -44,7 +44,7 @@ fprintf("Complete");
 function unsuccessful = main(attempt)
 
     % Number of generations
-    N = 55;
+    N = 15;
     
     % Set the boundaries of the tree
     s = 0.04;
